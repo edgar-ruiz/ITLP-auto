@@ -1,0 +1,93 @@
+#future-steps {
+  color: blue;
+}
+
+.emphasized {
+  font-size: 1.2em;
+}
+
+.gdbar img {
+  width: 114px !important;
+  height: 55px !important;
+  margin: 8px 8px;
+}
+
+.gdbar {
+  width: 300px !important;
+  height: 71px !important;
+}
+
+slides > slide:not(.nobackground):before {
+  width: 85px;
+  height: 37px;
+  background-size: 85px 37px;
+}
+
+.titulos {
+  color: purple;
+}
+
+h2 { /* Header 2 */
+    font-size: 24px;
+  color: DarkGreen;
+}
+
+h3 { /* Header 3 */
+    font-size: 17px;
+  color: DarkGreen;
+}
+
+img[alt=imagen] {
+  width: 90%;
+  border: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: none;
+}
+
+.column-left{
+  float: left;
+  width: 50%;
+  text-align: left;
+}
+
+.column-right{
+  float: right;
+  width: 50%;
+  text-align: right;
+}
+
+.cuadro {
+  width: 200px;
+  height: 200px;
+  padding: 20px;
+}
+
+.col2 {
+    columns: 2 200px;         /* number of columns and width in pixels*/
+    -webkit-columns: 2 200px; /* chrome, safari */
+    -moz-columns: 2 200px;    /* firefox */
+  }
+.col3 {
+    columns: 3 100px;
+    -webkit-columns: 3 100px;
+    -moz-columns: 3 100px;
+  }
+
+table.rmdtable th {
+  background: DarkMagenta;
+}
+
+slides > slide.backdrop {
+  background: white;
+}
+
+div.footnotes {
+  position: absolute;
+  bottom: 0;
+  margin-bottom: 10px;
+  width: 80%;
+  font-size: 0.6em;
+}
