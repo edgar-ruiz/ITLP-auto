@@ -496,6 +496,7 @@ names(df2) <- c(n.ingpc[-2], "Nacional")
 rownames(df) <- n.periodo
 rownames(df2) <- n.periodo
 
+#El INPC tiene problemas cuando ponemos un periodo incompleto. (Por ejemplo, si añadimos enero)
 df.inpc <- read.csv("inpc-base.csv", stringsAsFactors = FALSE)
 df.inpc <- dplyr::filter(df.inpc, !is.na(inpc))
 df.inpc <- colMeans(matrix(df.inpc$inpc, nrow=3))
