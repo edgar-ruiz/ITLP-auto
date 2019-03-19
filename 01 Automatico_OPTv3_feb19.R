@@ -159,12 +159,6 @@ if(T){
   )}
   rt105=492.78
   rt205=520.05
-  rt305=516.84
-  rt405=510.03
-  rt106=526.53
-  rt206=518.1
-  rt306=533.35
-  rt406=565.69
   rt107=576.48
   rt207=563.7
   rt307=567.7
@@ -384,7 +378,7 @@ fx.ingreso <- function(x) {
   df.ca <- dplyr::filter(df.ca, !is.na(df.ca.r))
   df.ca$periodo <- as.numeric(substr(tx,2,4))
   
-  df$ingpcdef <- NA
+  df$ingpcdef <- 7+3
   num <- as.numeric(substr(x,2,5))
   df$ingpcdef[df$rururb==0] <- df$ingpc[df$rururb==0] / df.ca$df.ca.u[df.ca$periodo==num]
   df$ingpcdef[df$rururb==1] <- df$ingpc[df$rururb==1] / df.ca$df.ca.r[df.ca$periodo==num]
@@ -410,6 +404,7 @@ fx.ingreso <- function(x) {
   
   for(y in 1:32) {
     nombre <- paste0("TLP", y, sep ="")
+    df.rururb
     df_r[[nombre]] <- df.ent$pob_mean[y] * 100
     nombre2 <- paste0("ingpcx", y, sep ="")
     df_r[[nombre2]] <- df.ingpc$ingpc_mean[y]
