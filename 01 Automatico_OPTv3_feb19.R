@@ -3,28 +3,16 @@
 rm(list=ls())
 ult.anio <- 18
 ult.trim <- 4
-todas.bases <- TRUE
+todas.bases <- FALSE
 setwd("C:/retrospect/ITLP R/")
 ### RECUERDA ! ACTUALIZA LAS BASES CA e INPC
 
 destino <- "C:/Base de datos/ENOE2"
 dest.dir <- "C:/retrospect/ITLP R/coe2"
-dest.dir2 <- "C:/retrospect/ITLP R/sdem"
-
-library(stringr)
-library(data.table)
-library(purrr)
-library(haven)
-library(foreign)
-library(tidyverse)
-library(dplyr)
-library(srvyr)
-library(doBy)
-library(lubridate)
-library(gdata)
-library(grid)
-library(gtable)
-library(gridExtra)
+library(pacman)
+p_load("data.table", "haven", "foreign",
+       "tidyverse", "srvyr", "lubridate",
+       "gdata", "grid", "gtable", "gridExtra")
 
 url2 <- "https://www.inegi.org.mx/contenidos/programas/enoe/15ymas/microdatos/20"
 
@@ -49,114 +37,51 @@ descargas3(str_pad(ult.anio, width = 2, pad = "0"), ult.trim)
 }
 
 if(T){
-  n.periodo <- {c("I 2005",
-                  "II 2005",
-                  "III 2005",
-                  "IV 2005",
-                  "I 2006",
-                  "II 2006",
-                  "III 2006",
-                  "IV 2006",
-                  "I 2007",
-                  "II 2007",
-                  "III 2007",
-                  "IV 2007",
-                  "I 2008",
-                  "II 2008",
-                  "III 2008",
-                  "IV 2008",
-                  "I 2009",
-                  "II 2009",
-                  "III 2009",
-                  "IV 2009",
-                  "I 2010" ,
-                  "II 2010" ,
-                  "III 2010" ,
-                  "IV 2010",
-                  "I 2011",
-                  "II 2011",
-                  "III 2011",
-                  "IV 2011",
-                  "I 2012",
-                  "II 2012",
-                  "III 2012",
-                  "IV 2012",
-                  "I 2013",
-                  "II 2013",
-                  "III 2013",
-                  "IV 2013",
-                  "I  2014" ,
-                  "II 2014",
-                  "III 2014",
-                  "IV 2014" ,
-                  "I 2015",
-                  "II 2015",
-                  "III 2015",
-                  "IV 2015",
-                  "I 2016",
-                  "II 2016",
-                  "III 2016",
-                  "IV 2016",
-                  "I 2017",
-                  "II 2017",
-                  "III 2017",
-                  "IV 2017",
-                  "I 2018",
-                  "II 2018",
-                  "III 2018","IV 2018"
-                  )}
-  tx <- {c("t105","t205","t305","t405",
-          "t106","t206","t306","t406",
-          "t107","t207","t307","t407",
-          "t108","t208","t308","t408",
-          "t109","t209","t309","t409",
-          "t110","t210","t310","t410",
-          "t111","t211","t311","t411",
-          "t112","t212","t312","t412",
-          "t113","t213","t313","t413",
-          "t114","t214","t314","t414",
-          "t115","t215","t315","t415",
-          "t116","t216","t316","t416",
-          "t117","t217","t317","t417",
-          "t118","t218","t318", "t418"
-          )}
+  n.periodo <- head(paste(rep(c("I", "II", "III", "IV"), (ult.anio - 05)),
+                          sort(rep(2005:(2000+ult.anio), 4)), sep = " "),
+                    ((ult.anio-4)*4)-(4-ult.trim))
+  
+  tx <- head(paste("t", rep(1:4, (ult.anio - 05)),
+                   str_sub(sort(rep(2005:(2000+ult.anio), 4)), -2), sep = ""),
+             ((ult.anio-4)*4)-(4-ult.trim))
+  
   n.itlp <-{ c("periodo",
-              "Nacional",
-              "Urbano",
-              "Rural",
-              "Aguascalientes",
-              "Baja_California",
-              "Baja_California_Sur",
-              "Campeche",
-              "Coahuila",
-              "Colima",
-              "Chiapas",
-              "Chihuahua",
-              "Ciudad_de_Mexico",
-              "Durango",
-              "Guanajuato",
-              "Guerrero",
-              "Hidalgo",
-              "Jalisco",
-              "Estado_de_Mexico",
-              "Michoacan",
-              "Morelos",
-              "Nayarit",
-              "Nuevo_Leon",
-              "Oaxaca",
-              "Puebla",
-              "Queritaro",
-              "Quintana_Roo",
-              "San_Luis_Potosi",
-              "Sinaloa",
-              "Sonora",
-              "Tabasco",
-              "Tamaulipas",
-              "Tlaxcala",
-              "Veracruz",
-              "Yucatan",
-              "Zacatecas"
-  )}
+               "Nacional",
+               "Urbano",
+               "Rural",
+               "Aguascalientes",
+               "Baja California",
+               "Baja California Sur",
+               "Campeche",
+               "Coahuila",
+               "Colima",
+               "Chiapas",
+               "Chihuahua",
+               "Ciudad de México",
+               "Durango",
+               "Guanajuato",
+               "Guerrero",
+               "Hidalgo",
+               "Jalisco",
+               "Estado de México",
+               "Michoacán",
+               "Morelos",
+               "Nayarit",
+               "Nuevo León",
+               "Oaxaca",
+               "Puebla",
+               "Querétaro",
+               "Quintana Roo",
+               "San Luis Potosí",
+               "Sinaloa",
+               "Sonora",
+               "Tabasco",
+               "Tamaulipas",
+               "Tlaxcala",
+               "Veracruz",
+               "Yucatán",
+               "Zacatecas")}
+               
   rt105=492.78
   rt205=520.05
   rt305=516.84
@@ -291,7 +216,7 @@ if(todas.bases){
              n=length(rep(1:4, times=(ult.anio-17)))-perm3)[-c(1,2)], 
         descargas3)
 }
-source("01 Automatico_OPTv3_ind.R")
+
 #### Calculo cambiar
 
 df.ca <- read.csv("ca-base.csv", stringsAsFactors = FALSE)
@@ -303,6 +228,14 @@ df.ca <- data.frame(cbind(df.ca.r, df.ca.u))
 
 df.ca$df.ca.r <- df.ca$df.ca.r / df.ca$df.ca.r[21]
 df.ca$df.ca.u <- df.ca$df.ca.u / df.ca$df.ca.u[21]
+df.ca <- dplyr::filter(df.ca, !is.na(df.ca.r))
+df.ca$periodo <- as.numeric(substr(tx,2,4))
+
+df.inpc <- read.csv("inpc-base.csv", stringsAsFactors = FALSE)
+df.inpc <- dplyr::filter(df.inpc, !is.na(inpc))
+v_inpc <- colMeans(matrix(df.inpc$inpc, nrow=3))
+
+source("01 Automatico_OPTv3_ind.R")
 
 fx.ingreso <- function(x) {
   nombre <- paste0("lp", x, sep ="")
@@ -381,9 +314,6 @@ fx.ingreso <- function(x) {
                              if_else((ingreso / tamh) < get(paste0("r", x, sep="")),1,0)),
                ingpc = ingreso / tamh)
                                      
-  df.ca <- dplyr::filter(df.ca, !is.na(df.ca.r))
-  df.ca$periodo <- as.numeric(substr(tx,2,4))
-  
   df$ingpcdef <- NA
   num <- as.numeric(substr(x,2,5))
   df$ingpcdef[df$rururb==0] <- df$ingpc[df$rururb==0] / df.ca$df.ca.u[df.ca$periodo==num]
@@ -496,12 +426,8 @@ names(df2) <- c(n.ingpc[-2], "Nacional")
 rownames(df) <- n.periodo
 rownames(df2) <- n.periodo
 
-df.inpc <- read.csv("inpc-base.csv", stringsAsFactors = FALSE)
-df.inpc <- dplyr::filter(df.inpc, !is.na(inpc))
-df.inpc <- colMeans(matrix(df.inpc$inpc, nrow=3))
-
 df3 <- df2
-df3$inpc <- df.inpc
+df3$inpc <- v_inpc
 df3$base <- df3$inpc / df3$inpc[df3$periodo==110]
 df3[,2:34] <- df3[,2:34] / df3$base
 
