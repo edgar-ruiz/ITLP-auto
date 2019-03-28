@@ -188,9 +188,9 @@ ultim.mes <- paste(case_when(ult.trim==1 ~ "mar", ult.trim==2 ~ "jun" , ult.trim
 url <- paste("https://www.coneval.org.mx/Informes/Pobreza/Datos_abiertos/lineas_de_pobreza_por_ingresos/lineas_pobreza_ingresos_ene1992_",
              ultim.mes,".csv", sep = "")
 
-download.file(url, destfile = "C:/Retrospect/2019/03/itlp/lineas.csv")
+download.file(url, destfile = "lineas.csv")
 
-lineas <- read.csv("D:/Retrospect/2019/03/itlp/lineas.csv", stringsAsFactors = FALSE)
+lineas <- read.csv("lineas.csv", stringsAsFactors = FALSE)
 
 lineas <- data.table(lineas)
 lineas <- dcast(lineas, anio + mes ~ desagregacion, value.var=c("lpei", "lpi"))
@@ -211,11 +211,11 @@ lineas[,3:4] <- round(lineas[,3:4], digits = 2)
 
 lineas <- mutate(lineas, periodo= paste("t",trim, str_sub(anio, -2,-1), sep=""))
 
-df.ca <- select(lineas, anio, lpei_r , lpei_u )
+df.ca <- dplyr::select(lineas, anio, lpei_r , lpei_u )
 names(df.ca) <- c("periodo","Rural","Urbano")
 
-df.ca.u <- colMeans(matrix(df.ca$Urbano, nrow=3))
-df.ca.r <- colMeans(matrix(df.ca$Rural, nrow=3))
+df.ca.u <- df.ca$Urbano
+df.ca.r <- df.ca$Rural
 
 df.ca <- data.frame(cbind(df.ca.r, df.ca.u))
 
