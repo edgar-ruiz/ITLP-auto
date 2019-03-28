@@ -14,7 +14,7 @@ dest.dir <- "D:/Retrospect/ITLP R/coe2"
 library(pacman)
 p_load("data.table", "haven", "foreign",
        "tidyverse", "srvyr", "lubridate",
-       "gdata", "grid", "gtable", "gridExtra", "httr", "jsonlite")
+       "gdata", "grid", "gtable", "gridExtra", "httr", "jsonlite", "rmarkdown")
 
 
 url2 <- "https://www.inegi.org.mx/contenidos/programas/enoe/15ymas/microdatos/20"
