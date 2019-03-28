@@ -426,7 +426,7 @@ df.ca$inc_r <- (df.ca$df.ca.r - lag(df.ca$df.ca.r))/lag(df.ca$df.ca.r)
 df.ca$inc_u <- (df.ca$df.ca.u - lag(df.ca$df.ca.u))/lag(df.ca$df.ca.u)
 df.ca$per <- paste("t",df3$periodo, sep="")
 gdata::keep(ult.anio, ult.trim.l, ult.trim, n.periodo, n.ingpc,df,df2,df3,df4,df7, df.ca,add_sublabs, sure=T)
-save.image(file="datos_final.RData")
+save.image(file="presentaciones/datos_final.RData")
 
 
 library("rmarkdown")
