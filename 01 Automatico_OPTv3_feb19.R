@@ -1,14 +1,15 @@
 ### Descarga bases
 
 rm(list=ls())
+tiempo <- Sys.time()
 ult.anio <- 18
 ult.trim <- 4
-todas.bases <- FALSE
-setwd("C:/retrospect/ITLP R/")
+todas.bases <- TRUE
+setwd("D:/Retrospect/ITLP R/")
 ### RECUERDA ! ACTUALIZA LAS BASES CA e INPC
 
-destino <- "C:/Base de datos/ENOE2"
-dest.dir <- "C:/retrospect/ITLP R/coe2"
+destino <- "D:/Retrospect/EN C/Base de datos/ENOE2"
+dest.dir <- "D:/Retrospect/ITLP R/coe2"
 
 library(pacman)
 p_load("data.table", "haven", "foreign",
@@ -108,7 +109,7 @@ if(todas.bases){
 
 #### Calculo cambiar
 
-ultim.mes <- paste(case_when(ult.trim==1 ~ "mar", ult.trim==2 ~ "jun" , ult.trim==1 ~ "sep", ult.trim==1 ~ "dic"), 
+ultim.mes <- paste(case_when(ult.trim==1 ~ "mar", ult.trim==2 ~ "jun" , ult.trim==3 ~ "sep", ult.trim==4 ~ "dic"), 
                    paste("20", ult.anio, sep = ""), sep = "")
 
 url <- paste("https://www.coneval.org.mx/Informes/Pobreza/Datos_abiertos/lineas_de_pobreza_por_ingresos/lineas_pobreza_ingresos_ene1992_",
@@ -149,10 +150,9 @@ df.ca$df.ca.r <- df.ca$df.ca.r / df.ca$df.ca.r[21]
 df.ca$df.ca.u <- df.ca$df.ca.u / df.ca$df.ca.u[21]
 df.ca <- dplyr::filter(df.ca, !is.na(df.ca.r))
 df.ca$periodo <- as.numeric(substr(tx,2,4))
-historico <- TRUE
 
 url <- "http://www3.inegi.org.mx/sistemas/api/indicadores/v1/Indicador/"
-if(historico == TRUE) {url1 <- "/01/es/false/json/"} else {url1 <- "/01/es/true/json/"}
+url1 <- "/01/es/false/json/"
 auth <- "9e0b148e-428f-0ffa-4508-6cf5f04c5854"
 
 inpc_gen <- 583766
@@ -173,11 +173,11 @@ colnames(df.inpc) <- c("serie", "periodo", "inpc")
 df.inpc$periodo <-  as.character(df.inpc$periodo)
 df.inpc$inpc    <- as.numeric(as.character(df.inpc$inpc))
 df.inpc <- mutate(df.inpc, anio = str_sub(periodo, 1, 4), mes = str_sub(periodo, -2, -1))
-df.inpc <- filter(df.inpc, anio>=2005)
+df.inpc <- dplyr::filter(df.inpc, anio>=2005)
 
 df.inpc<- mutate(df.inpc, trim = case_when(mes=="01" |mes=="02" | mes=="03" ~ 1, mes=="04" |mes=="05" | mes=="06" ~ 2, 
                                mes=="07" |mes=="08" | mes=="09" ~ 3, mes=="10" |mes=="11" | mes=="12" ~ 4))
-df.inpc <- select(df.inpc, anio, trim, inpc)
+df.inpc <- dplyr::select(df.inpc, anio, trim, inpc)
 
 df.inpc <- df.inpc %>% group_by(anio, trim) %>%
   dplyr::summarise(inpc_trim = mean(inpc))
@@ -187,7 +187,6 @@ v_inpc <- df.inpc$inpc_trim
 source("01 Automatico_OPTv3_ind.R")
 
 fx.ingreso <- function(x) {
-  nombre <- paste0("lp", x, sep ="")
   num <- as.numeric(substr(x,2,5))
   df <- fread(paste0("coe2/coe2", x, ".csv", sep=""))
   colnames(df) <- tolower(colnames(df))
@@ -256,11 +255,10 @@ fx.ingreso <- function(x) {
   # EL PROMEDIO DE LA LINEA DE BIENESTAR MMNIMO :
   # 
   ####################################################  
-  nombre <- paste0("lp", x, sep ="")
   df <- mutate(df, factorp = df$factor * df$tamh,
                pob = if_else(rururb == 0,
-                             if_else((ingreso / tamh) < lineas$lpei_u[periodo== x],1,0),
-                             if_else((ingreso / tamh) < lineas$lpei_u[periodo== x],1,0)),
+                             if_else((ingreso / tamh) < lineas$lpei_u[lineas$periodo== x],1,0),
+                             if_else((ingreso / tamh) < lineas$lpei_r[lineas$periodo== x],1,0)),
                ingpc = ingreso / tamh)
                                      
   df$ingpcdef <- NA
@@ -314,19 +312,19 @@ if(todas.bases){
   for (i in 2:length(f)) {
     df <- bind_rows(df, f[[i]])
   }
-  write.dbf(df, "temp/def_ca.dbf")
+  fwrite(df, "temp/temporal.csv")
 } else {
-  df <- read.dbf("temp/def_ca.dbf", as.is = TRUE)
+  df <- fread("temp/temporal.csv")
   df <- filter(df, periodo != tx[length(tx)])
   f <- fx.ingreso(tx[length(tx)])
   df <- bind_rows(df, f)
   
-  write.dbf(df, "temp/temporal.dbf")
+  fwrite(df, "temp/temporal.csv")
 }
 
 
 
-### df <- read.dbf("temp/temporal.dbf", as.is = TRUE)
+### df <- fread("temp/temporal.csv")
 
 df4 <-dplyr::select(df, periodo, starts_with("ingpcdef")) %>% 
   mutate(periodo = substr(periodo, 2, 5))
@@ -376,7 +374,7 @@ rownames(df) <- n.periodo
 rownames(df2) <- n.periodo
 
 df3 <- df2
-df3$inpc <- v_inpc
+df3$inpc <- head(v_inpc, length(df3$periodo))
 df3$base <- df3$inpc / df3$inpc[df3$periodo==110]
 df3[,2:34] <- df3[,2:34] / df3$base
 
@@ -391,11 +389,11 @@ df4 <- data.frame(periodo = df4[,1],sapply(df4[,-1], FUN=round, digits=2))
 names(df) <- c("periodo", "Nacional", "Urbano", "Rural", n.ingpc[-c(1,2)])
 names(df7) <- c("periodo", "Nacional", "Urbano", "Rural", n.ingpc[-c(1,2)])
 
-write.csv(df, "temp/ITLP IS.csv")
-write.csv(df2, "temp/IL-Corriente.csv")
-write.csv(df3, "temp/IL-INPC.csv")
-write.csv(df4, "temp/IL-CA.csv")
-write.csv(df7, "temp/TLP.csv")
+fwrite(df, "temp/ITLP IS.csv")
+fwrite(df2, "temp/IL-Corriente.csv")
+fwrite(df3, "temp/IL-INPC.csv")
+fwrite(df4, "temp/IL-CA.csv")
+fwrite(df7, "temp/TLP.csv")
 
 ult.trim.l <- if_else(ult.trim == 1, "primer",
                       if_else(ult.trim==2, "segundo",
@@ -440,3 +438,4 @@ library("rmarkdown")
 #                                   "\"", sep=""))))
 
 rmarkdown::render("presentaciones\\Comunicado de prensa.Rmd", encoding="UTF-8")
+Sys.time() - tiempo
