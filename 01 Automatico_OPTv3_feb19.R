@@ -25,6 +25,8 @@ library(gdata)
 library(grid)
 library(gtable)
 library(gridExtra)
+library(httr)
+library(jsonlite)
 
 url2 <- "https://www.inegi.org.mx/contenidos/programas/enoe/15ymas/microdatos/20"
 
@@ -414,9 +416,38 @@ names(df2) <- c(n.ingpc[-2], "Nacional")
 rownames(df) <- n.periodo
 rownames(df2) <- n.periodo
 
-df.inpc <- read.csv("inpc-base.csv", stringsAsFactors = FALSE)
-df.inpc <- dplyr::filter(df.inpc, !is.na(inpc))
-df.inpc <- colMeans(matrix(df.inpc$inpc, nrow=3))
+historico <- TRUE
+
+url <- "http://www3.inegi.org.mx/sistemas/api/indicadores/v1/Indicador/"
+if(historico == TRUE) {url1 <- "/01/es/false/json/"} else {url1 <- "/01/es/true/json/"}
+auth <- "9e0b148e-428f-0ffa-4508-6cf5f04c5854"
+
+inpc_gen <- 583766
+  
+series <- function(i){
+
+  raw <- httr::GET(paste0(url,i, url1,auth, sep=""))
+  txt.c <- content(raw, as = "text", encoding = "UTF-8")  %>% fromJSON
+  print(paste0("Terminó la serie ",i, sep = " "))
+  txt.c$Data$Serie 
+  df <- data.frame(serie=i, txt.c$Data$Serie$TimePeriod , txt.c$Data$Serie$CurrentValue)
+}
+
+df.inpc <- map(inpc_gen,series)
+
+df.inpc <- tibble(df.inpc) %>% unnest(df.inpc) 
+colnames(df.inpc) <- c("serie", "periodo", "inpc")
+df.inpc$periodo <-  as.character(df.inpc$periodo)
+df.inpc$inpc    <- as.numeric(as.character(df.inpc$inpc))
+df.inpc <- mutate(df.inpc, anio = str_sub(periodo, 1, 4), mes = str_sub(periodo, -2, -1))
+df.inpc <- filter(df.inpc, anio>=2005)
+
+df.inpc<- mutate(df.inpc, trim = case_when(mes=="01" |mes=="02" | mes=="03" ~ 1, mes=="04" |mes=="05" | mes=="06" ~ 2, 
+                               mes=="07" |mes=="08" | mes=="09" ~ 3, mes=="10" |mes=="11" | mes=="12" ~ 4))
+df.inpc <- select(df.inpc, anio, trim, inpc)
+
+df.inpc <- df.inpc %>% group_by(anio, trim) %>%
+  dplyr::summarise(inpc_trim = mean(inpc))
 
 df3 <- df2
 df3$inpc <- df.inpc
@@ -483,4 +514,3 @@ library("rmarkdown")
 #                                   "\"", sep=""))))
 
 rmarkdown::render("presentaciones\\Comunicado de prensa.Rmd", encoding="UTF-8")
-
