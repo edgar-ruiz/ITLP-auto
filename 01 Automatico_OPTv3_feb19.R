@@ -25,6 +25,8 @@ library(gdata)
 library(grid)
 library(gtable)
 library(gridExtra)
+library(httr)
+library(jsonlite)
 
 url2 <- "https://www.inegi.org.mx/contenidos/programas/enoe/15ymas/microdatos/20"
 
@@ -157,118 +159,6 @@ if(T){
               "Yucatan",
               "Zacatecas"
   )}
-  rt105=492.78
-  rt205=520.05
-  rt305=516.84
-  rt405=510.03
-  rt106=526.53
-  rt206=518.1
-  rt306=533.35
-  rt406=565.69
-  rt107=576.48
-  rt207=563.7
-  rt307=567.7
-  rt407=582.76
-  rt108=585.91
-  rt208=601.28
-  rt308=614.67
-  rt408=640.53
-  rt109=649.04
-  rt209=672.97
-  rt309=686.43
-  rt409=686.09
-  rt110=705.17
-  rt210=695.86
-  rt310=684.99
-  rt410=705.71
-  rt111=717.4
-  rt211=717.83
-  rt311=716.93
-  rt411=740.43
-  rt112=765.39
-  rt212=770.93
-  rt312=805.72
-  rt412=820.38
-  rt113=828.61
-  rt213=837.18
-  rt313=833.37
-  rt413=853.72
-  rt114=870.81
-  rt214=854.08
-  rt314=869.82
-  rt414=899.27
-  rt115=896.17
-  rt215=901.34
-  rt315=911.38
-  rt415=926.32
-  rt116=959.7
-  rt216=947.13
-  rt316=942.81
-  rt416=970.61
-  rt117=975.82
-  rt217=1003.88
-  rt317=1053.26
-  rt417=1054.84
-  rt118=1052.56
-  rt218=1046.25
-  rt318=1068.21
-  ut105=712.54
-  ut205=741.49
-  ut305=740.37
-  ut405=736.48
-  ut106=754.24
-  ut206=748.55
-  ut306=764.24
-  ut406=797.76
-  ut107=814.7
-  ut207=803.92
-  ut307=810.79
-  ut407=830.52
-  ut108=839.18
-  ut208=858.24
-  ut308=875.52
-  ut408=906.75
-  ut109=922
-  ut209=949.84
-  ut309=967.6
-  ut409=968.9
-  ut110=992.68
-  ut210=987.38
-  ut310=979.48
-  ut410=1003.59
-  ut111=1021.5
-  ut211=1022.29
-  ut311=1023.17
-  ut411=1049.22
-  ut112=1079.48
-  ut212=1089.02
-  ut312=1130.09
-  ut412=1151.75
-  ut113=1166.22
-  ut213=1177.4
-  ut313=1177.99
-  ut413=1201.99
-  ut114=1234.8
-  ut214=1223.42
-  ut314=1243.83
-  ut414=1276.56
-  ut115=1264.53
-  ut215=1268.44
-  ut315=1282.51
-  ut415=1302.59
-  ut116=1338.64
-  ut216=1329.36
-  ut316=1323.88
-  ut416=1357.24
-  ut117=1376.88
-  ut217=1410.21
-  ut317=1469.65
-  ut417=1479.05
-  ut118=1482.13
-  ut218=1477.31
-  ut318=1510.45
-  ut418=1533.46
-  rt418=1091.92
 }
 
 if(todas.bases){
@@ -294,7 +184,37 @@ if(todas.bases){
 source("01 Automatico_OPTv3_ind.R")
 #### Calculo cambiar
 
-df.ca <- read.csv("ca-base.csv", stringsAsFactors = FALSE)
+ultim.mes <- paste(case_when(ult.trim==1 ~ "mar", ult.trim==2 ~ "jun" , ult.trim==1 ~ "sep", ult.trim==1 ~ "dic"), 
+                   paste("20", ult.anio, sep = ""), sep = "")
+
+url <- paste("https://www.coneval.org.mx/Informes/Pobreza/Datos_abiertos/lineas_de_pobreza_por_ingresos/lineas_pobreza_ingresos_ene1992_",
+             ultim.mes,".csv", sep = "")
+
+download.file(url, destfile = "C:/Retrospect/2019/03/itlp/lineas.csv")
+
+lineas <- read.csv("D:/Retrospect/2019/03/itlp/lineas.csv", stringsAsFactors = FALSE)
+
+lineas <- data.table(lineas)
+lineas <- dcast(lineas, anio + mes ~ desagregacion, value.var=c("lpei", "lpi"))
+lineas <- data.frame(lineas)
+
+lineas <- mutate(lineas, mes =case_when(mes=="Ene" ~ 1 ,mes=="Feb" ~ 2, mes=="Mar" ~ 3, mes=="Abr" ~ 4, mes=="May" ~ 5, mes=="Jun" ~ 6,
+                                        mes=="Jul" ~ 7, mes=="Ago" ~ 8, mes=="Sep" ~ 9, mes=="Oct" ~ 10, mes=="Nov" ~ 11, mes=="Dic" ~ 12))
+lineas <- arrange(lineas, anio, mes)
+lineas <- filter(lineas, anio>=2005)
+
+lineas <- mutate(lineas, trim = case_when(mes==1 |mes==2 | mes==3 ~ 1, mes==4 |mes==5 | mes==6 ~ 2, 
+                                          mes==7 |mes==8 | mes==9 ~ 3, mes==10 |mes==11 | mes==12 ~ 4))
+
+lineas <- lineas %>% group_by(anio, trim) %>%
+  summarise(lpei_r = mean(lpei_Rural), lpei_u = mean(lpei_Urbano))
+
+lineas[,3:4] <- round(lineas[,3:4], digits = 2)
+
+lineas <- mutate(lineas, periodo= paste("t",trim, str_sub(anio, -2,-1), sep=""))
+
+df.ca <- select(lineas, anio, lpei_r , lpei_u )
+names(df.ca) <- c("periodo","Rural","Urbano")
 
 df.ca.u <- colMeans(matrix(df.ca$Urbano, nrow=3))
 df.ca.r <- colMeans(matrix(df.ca$Rural, nrow=3))
@@ -377,8 +297,8 @@ fx.ingreso <- function(x) {
   nombre <- paste0("lp", x, sep ="")
   df <- mutate(df, factorp = df$factor * df$tamh,
                pob = if_else(rururb == 0,
-                             if_else((ingreso / tamh) < get(paste0("u", x, sep="")),1,0),
-                             if_else((ingreso / tamh) < get(paste0("r", x, sep="")),1,0)),
+                             if_else((ingreso / tamh) < lineas$lpei_u[periodo== x],1,0),
+                             if_else((ingreso / tamh) < lineas$lpei_u[periodo== x],1,0)),
                ingpc = ingreso / tamh)
                                      
   df.ca <- dplyr::filter(df.ca, !is.na(df.ca.r))
@@ -496,9 +416,38 @@ names(df2) <- c(n.ingpc[-2], "Nacional")
 rownames(df) <- n.periodo
 rownames(df2) <- n.periodo
 
-df.inpc <- read.csv("inpc-base.csv", stringsAsFactors = FALSE)
-df.inpc <- dplyr::filter(df.inpc, !is.na(inpc))
-df.inpc <- colMeans(matrix(df.inpc$inpc, nrow=3))
+historico <- TRUE
+
+url <- "http://www3.inegi.org.mx/sistemas/api/indicadores/v1/Indicador/"
+if(historico == TRUE) {url1 <- "/01/es/false/json/"} else {url1 <- "/01/es/true/json/"}
+auth <- "9e0b148e-428f-0ffa-4508-6cf5f04c5854"
+
+inpc_gen <- 583766
+  
+series <- function(i){
+
+  raw <- httr::GET(paste0(url,i, url1,auth, sep=""))
+  txt.c <- content(raw, as = "text", encoding = "UTF-8")  %>% fromJSON
+  print(paste0("Terminó la serie ",i, sep = " "))
+  txt.c$Data$Serie 
+  df <- data.frame(serie=i, txt.c$Data$Serie$TimePeriod , txt.c$Data$Serie$CurrentValue)
+}
+
+df.inpc <- map(inpc_gen,series)
+
+df.inpc <- tibble(df.inpc) %>% unnest(df.inpc) 
+colnames(df.inpc) <- c("serie", "periodo", "inpc")
+df.inpc$periodo <-  as.character(df.inpc$periodo)
+df.inpc$inpc    <- as.numeric(as.character(df.inpc$inpc))
+df.inpc <- mutate(df.inpc, anio = str_sub(periodo, 1, 4), mes = str_sub(periodo, -2, -1))
+df.inpc <- filter(df.inpc, anio>=2005)
+
+df.inpc<- mutate(df.inpc, trim = case_when(mes=="01" |mes=="02" | mes=="03" ~ 1, mes=="04" |mes=="05" | mes=="06" ~ 2, 
+                               mes=="07" |mes=="08" | mes=="09" ~ 3, mes=="10" |mes=="11" | mes=="12" ~ 4))
+df.inpc <- select(df.inpc, anio, trim, inpc)
+
+df.inpc <- df.inpc %>% group_by(anio, trim) %>%
+  dplyr::summarise(inpc_trim = mean(inpc))
 
 df3 <- df2
 df3$inpc <- df.inpc
@@ -565,4 +514,3 @@ library("rmarkdown")
 #                                   "\"", sep=""))))
 
 rmarkdown::render("presentaciones\\Comunicado de prensa.Rmd", encoding="UTF-8")
-
