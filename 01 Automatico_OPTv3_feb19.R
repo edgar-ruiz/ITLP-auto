@@ -273,7 +273,7 @@ fx.ingreso <- function(x) {
   # 
   ####################################################  
   df <- df[, c("factorp", "pob", "ingpc", "ingpcdef") := 
-             .(df$factor * df$tamh,
+             .(factor * tamh,
                case_when(rururb == 0 & (ingreso / tamh) < lineas$lpei_u[lineas$periodo== x] ~ 1,
                          rururb == 1 & (ingreso / tamh) < lineas$lpei_r[lineas$periodo== x] ~ 1,
                          TRUE ~ 0),
