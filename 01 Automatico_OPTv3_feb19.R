@@ -7,15 +7,12 @@ ult.trim <- 4
 todas.bases <- TRUE
 
 ### RECUERDA ! ACTUALIZA LAS BASES CA e INPC
-
-destino <- here::here("bases", "ENIGH_desc")
-dest.dir <- here::here("bases", "ENIGH_util")
-
 library(pacman)
 p_load("data.table", "haven", "foreign",
        "tidyverse", "srvyr", "lubridate", "here",
        "gdata", "grid", "gtable", "gridExtra", "httr", "jsonlite", "rmarkdown")
-
+destino <- here::here("bases", "ENIGH_desc")
+dest.dir <- here::here("bases", "ENIGH_util")
 
 url2 <- "https://www.inegi.org.mx/contenidos/programas/enoe/15ymas/microdatos/20"
 
