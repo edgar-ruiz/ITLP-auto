@@ -170,7 +170,7 @@ colnames(df.inpc) <- c("serie", "periodo", "inpc")
 
 df.inpc <- df.inpc[, c("periodo", "inpc") := 
                      .(as.character(periodo),
-                       as.character(inpc))
+                       as.numeric(as.character(inpc)))
                    ][, c("anio", "mes") :=
                        .(str_sub(periodo, 1, 4),
                          str_sub(periodo, -2, -1))
@@ -183,7 +183,7 @@ df.inpc <- df.inpc[, c("periodo", "inpc") :=
                                                mes=="11" | mes=="12" ~ 4)
                          ][, .(anio, trim, inpc)
                            ][, inpc_trim := 
-                               .(mean(as.numeric(inpc))), by=.(anio, trim)
+                               .(mean(inpc)), by=.(anio, trim)
                              ][, .(anio, trim, inpc_trim)]
 
 df.inpc <-subset(unique(df.inpc))
