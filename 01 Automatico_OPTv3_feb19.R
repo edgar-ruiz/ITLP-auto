@@ -6,6 +6,9 @@ ult.anio <- 18
 ult.trim <- 4
 todas.bases <- TRUE
 
+if (!require(pacman)) install.packages("pacman")
+library(pacman)
+
 ### RECUERDA ! ACTUALIZA LAS BASES CA e INPC
 library(pacman)
 p_load("data.table", "haven", "foreign",
