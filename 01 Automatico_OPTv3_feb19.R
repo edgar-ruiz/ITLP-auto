@@ -5,15 +5,15 @@ tiempo <- Sys.time()
 ult.anio <- 18
 ult.trim <- 4
 todas.bases <- TRUE
-setwd("D:/Retrospect/ITLP R/")
+
 ### RECUERDA ! ACTUALIZA LAS BASES CA e INPC
 
-destino <- "D:/Retrospect/EN C/Base de datos/ENOE2"
-dest.dir <- "D:/Retrospect/ITLP R/coe2"
+destino <- here::here("bases", "ENIGH_desc")
+dest.dir <- here::here("bases", "ENIGH_util")
 
 library(pacman)
 p_load("data.table", "haven", "foreign",
-       "tidyverse", "srvyr", "lubridate",
+       "tidyverse", "srvyr", "lubridate", "here",
        "gdata", "grid", "gtable", "gridExtra", "httr", "jsonlite", "rmarkdown")
 
 
@@ -21,23 +21,21 @@ url2 <- "https://www.inegi.org.mx/contenidos/programas/enoe/15ymas/microdatos/20
 
 descargas2 <- function(i, j){
   download.file(paste0(url2, i,"trim",j,"_csv.zip", sep=""),
-                paste0(destino, "enoe_15ymas_20", i, j, "_csv.zip"), mode="wb")
-  inicio <- paste0(destino, "enoe_15ymas_20", i, sep="")
-  unzip(paste0(destino, "enoe_15ymas_20", i, j, "_csv.zip"), exdir = dest.dir)
+                paste0(destino, "/enoe_15ymas_20", i, j, "_csv.zip"), mode="wb")
+  inicio <- paste0(destino, "/enoe_15ymas_20", i, sep="")
+  unzip(paste0(destino, "/enoe_15ymas_20", i, j, "_csv.zip"), exdir = dest.dir)
 }
 
 url3 <- "https://www.inegi.org.mx/contenidos/programas/enoe/15ymas/microdatos/20"
 
 descargas3 <- function(i, j){
   download.file(paste0(url3, i,"trim",j,"_csv.zip", sep=""),
-                paste0(destino, "enoe_15ymas_20", i, j, "_csv.zip"), mode="wb")
-  inicio <- paste0(destino, "enoe_15ymas_20", i, sep="")
-  unzip(paste0(destino, "enoe_15ymas_20", i, j, "_csv.zip"), exdir = dest.dir)
+                paste0(destino, "/enoe_15ymas_20", i, j, "_csv.zip"), mode="wb")
+  inicio <- paste0(destino, "/enoe_15ymas_20", i, sep="")
+  unzip(paste0(destino, "/enoe_15ymas_20", i, j, "_csv.zip"), exdir = dest.dir)
 }
 
-if(!todas.bases){
-descargas3(str_pad(ult.anio, width = 2, pad = "0"), ult.trim)
-}
+
 
 if(T){
   n.periodo <- head(paste(rep(c("I", "II", "III", "IV"), (ult.anio - 05)),
@@ -86,7 +84,9 @@ if(T){
                "Zacatecas")}
 }
 
-if(todas.bases){
+if(!todas.bases){
+  descargas3(str_pad(ult.anio, width = 2, pad = "0"), ult.trim)
+} else {
   anios2 <- str_pad(5:18,2,pad="0")
   perm <- 4 - 2
   
@@ -107,38 +107,43 @@ if(todas.bases){
         descargas3)
 }
 
+
 #### Calculo cambiar
 
-ultim.mes <- paste(case_when(ult.trim==1 ~ "mar", ult.trim==2 ~ "jun" , ult.trim==3 ~ "sep", ult.trim==4 ~ "dic"), 
+ultim.mes <- paste(case_when(ult.trim==1 ~ "mar", ult.trim==2 ~ "jun" , 
+                             ult.trim==3 ~ "sep", ult.trim==4 ~ "dic"), 
                    paste("20", ult.anio, sep = ""), sep = "")
 
-url <- paste("https://www.coneval.org.mx/Informes/Pobreza/Datos_abiertos/lineas_de_pobreza_por_ingresos/lineas_pobreza_ingresos_ene1992_",
+url <- paste("https://www.coneval.org.mx/Informes/Pobreza/Datos_abiertos/",
+             "lineas_de_pobreza_por_ingresos/lineas_pobreza_ingresos_ene1992_",
              ultim.mes,".csv", sep = "")
 
-download.file(url, destfile = "lineas.csv")
+download.file(url, destfile = here::here("bases", "lineas.csv"))
 
-lineas <- read.csv("lineas.csv", stringsAsFactors = FALSE)
-
-lineas <- data.table(lineas)
+lineas <- fread(here::here("bases", "lineas.csv"))
 lineas <- dcast(lineas, anio + mes ~ desagregacion, value.var=c("lpei", "lpi"))
-lineas <- data.frame(lineas)
+lineas <- lineas[, mes := case_when(mes=="Ene" ~ 1 ,mes=="Feb" ~ 2, 
+                                    mes=="Mar" ~ 3, mes=="Abr" ~ 4, 
+                                    mes=="May" ~ 5, mes=="Jun" ~ 6,
+                                    mes=="Jul" ~ 7, mes=="Ago" ~ 8, 
+                                    mes=="Sep" ~ 9, mes=="Oct" ~ 10, 
+                                    mes=="Nov" ~ 11, mes=="Dic" ~ 12)
+                 ][anio>=2005
+                   ][, trim := case_when(mes==1 |mes==2 | mes==3 ~ 1, 
+                                         mes==4 |mes==5 | mes==6 ~ 2, 
+                                         mes==7 |mes==8 | mes==9 ~ 3, 
+                                         mes==10 |mes==11 | mes==12 ~ 4)
+                     ][, c("lpei_r",
+                           "lpei_u") := 
+                         .(round(mean(lpei_Rural), 2),
+                           round(mean(lpei_Urbano), 2)), by=.(anio, trim)
+                       ][, .(anio, trim, lpei_r, lpei_u)
+                         ][, "periodo" := 
+                             paste("t",trim, str_sub(anio, -2,-1), sep="")]
 
-lineas <- mutate(lineas, mes =case_when(mes=="Ene" ~ 1 ,mes=="Feb" ~ 2, mes=="Mar" ~ 3, mes=="Abr" ~ 4, mes=="May" ~ 5, mes=="Jun" ~ 6,
-                                        mes=="Jul" ~ 7, mes=="Ago" ~ 8, mes=="Sep" ~ 9, mes=="Oct" ~ 10, mes=="Nov" ~ 11, mes=="Dic" ~ 12))
-lineas <- arrange(lineas, anio, mes)
-lineas <- filter(lineas, anio>=2005)
+lineas <-subset(unique(lineas))
 
-lineas <- mutate(lineas, trim = case_when(mes==1 |mes==2 | mes==3 ~ 1, mes==4 |mes==5 | mes==6 ~ 2, 
-                                          mes==7 |mes==8 | mes==9 ~ 3, mes==10 |mes==11 | mes==12 ~ 4))
-
-lineas <- lineas %>% group_by(anio, trim) %>%
-  summarise(lpei_r = mean(lpei_Rural), lpei_u = mean(lpei_Urbano))
-
-lineas[,3:4] <- round(lineas[,3:4], digits = 2)
-
-lineas <- mutate(lineas, periodo= paste("t",trim, str_sub(anio, -2,-1), sep=""))
-
-df.ca <- dplyr::select(lineas, anio, lpei_r , lpei_u )
+df.ca <- lineas[, .(periodo, lpei_r , lpei_u) ]
 names(df.ca) <- c("periodo","Rural","Urbano")
 
 df.ca.u <- df.ca$Urbano
@@ -155,32 +160,34 @@ url <- "http://www3.inegi.org.mx/sistemas/api/indicadores/v1/Indicador/"
 url1 <- "/01/es/false/json/"
 auth <- "9e0b148e-428f-0ffa-4508-6cf5f04c5854"
 
-inpc_gen <- 583766
-  
-series <- function(i){
+raw <- httr::GET(paste0(url,583766, url1,auth, sep=""))
+txt.c <- content(raw, as = "text", encoding = "UTF-8")  %>% fromJSON
 
-  raw <- httr::GET(paste0(url,i, url1,auth, sep=""))
-  txt.c <- content(raw, as = "text", encoding = "UTF-8")  %>% fromJSON
-  print(paste0("Terminó la serie ",i, sep = " "))
-  txt.c$Data$Serie 
-  df <- data.frame(serie=i, txt.c$Data$Serie$TimePeriod , txt.c$Data$Serie$CurrentValue)
-}
+df.inpc <- data.table(serie=583766, txt.c$Data$Serie$TimePeriod ,
+                      txt.c$Data$Serie$CurrentValue)
 
-df.inpc <- map(inpc_gen,series)
-
-df.inpc <- tibble(df.inpc) %>% unnest(df.inpc) 
 colnames(df.inpc) <- c("serie", "periodo", "inpc")
-df.inpc$periodo <-  as.character(df.inpc$periodo)
-df.inpc$inpc    <- as.numeric(as.character(df.inpc$inpc))
-df.inpc <- mutate(df.inpc, anio = str_sub(periodo, 1, 4), mes = str_sub(periodo, -2, -1))
-df.inpc <- dplyr::filter(df.inpc, anio>=2005)
 
-df.inpc<- mutate(df.inpc, trim = case_when(mes=="01" |mes=="02" | mes=="03" ~ 1, mes=="04" |mes=="05" | mes=="06" ~ 2, 
-                               mes=="07" |mes=="08" | mes=="09" ~ 3, mes=="10" |mes=="11" | mes=="12" ~ 4))
-df.inpc <- dplyr::select(df.inpc, anio, trim, inpc)
+df.inpc <- df.inpc[, c("periodo", "inpc") := 
+                     .(as.character(periodo),
+                       as.numeric(as.character(inpc)))
+                   ][, c("anio", "mes") :=
+                       .(str_sub(periodo, 1, 4),
+                         str_sub(periodo, -2, -1))
+                     ][anio>=2005
+                       ][, trim := case_when(mes=="01" |mes=="02" |
+                                               mes=="03" ~ 1, mes=="04" |
+                                               mes=="05" | mes=="06" ~ 2, 
+                                             mes=="07" |mes=="08" |
+                                               mes=="09" ~ 3, mes=="10" |
+                                               mes=="11" | mes=="12" ~ 4)
+                         ][, .(anio, trim, inpc)
+                           ][, inpc_trim := 
+                               .(mean(inpc)), by=.(anio, trim)
+                             ][, .(anio, trim, inpc_trim)]
 
-df.inpc <- df.inpc %>% group_by(anio, trim) %>%
-  dplyr::summarise(inpc_trim = mean(inpc))
+df.inpc <-subset(unique(df.inpc))
+
 
 v_inpc <- df.inpc$inpc_trim
 
@@ -188,7 +195,7 @@ source("01 Automatico_OPTv3_ind.R")
 
 fx.ingreso <- function(x) {
   num <- as.numeric(substr(x,2,5))
-  df <- fread(paste0("coe2/coe2", x, ".csv", sep=""))
+  df <- fread(here::here("bases", "ENIGH_util", paste0("coe2", x, ".csv", sep="")))
   colnames(df) <- tolower(colnames(df))
   df <- df[, c("cd_a", "ent", "con", "v_sel", "n_ren") :=
              .(str_pad(cd_a, 2, "left", "0"),
@@ -199,21 +206,22 @@ fx.ingreso <- function(x) {
   df <- df[,foliop := paste0(cd_a, ent, con, v_sel,n_hog, h_mud, n_ren, sep="")
            ][, .(foliop, p6c, p6b2, p6_9, p6a3)]
   
-  df2 <- fread(paste0("coe2/sdem", x, ".csv", sep=""))
+  df2 <- fread(here::here("bases", "ENIGH_util", paste0("sdem", x, ".csv", sep="")))
   colnames(df2) <- tolower(colnames(df2))
   df2 <- df2[, c("cd_a", "ent", "con", "v_sel", "n_ren") :=
-             .(str_pad(cd_a, 2, "left", "0"),
-               str_pad(ent, 2, "left", "0"),
-               str_pad(con, 5, "left", "0"),
-               str_pad(v_sel, 2, "left", "0"),
-               str_pad(n_ren, 2, "left", "0"))]
+               .(str_pad(cd_a, 2, "left", "0"),
+                 str_pad(ent, 2, "left", "0"),
+                 str_pad(con, 5, "left", "0"),
+                 str_pad(v_sel, 2, "left", "0"),
+                 str_pad(n_ren, 2, "left", "0"))]
   df2 <- df2[r_def==0 & (c_res==1 | c_res==3)
              ][,
                c("folioh", 
                  "foliop") := 
                  .(paste0(cd_a, ent, con, v_sel, n_hog, h_mud, sep=""),
                    paste0(cd_a, ent, con, v_sel, n_hog, h_mud, n_ren, sep=""))][
-                     , .(folioh, foliop, salario, t_loc, fac, clase1, clase2, ent, ingocup, mun)]
+                     , .(folioh, foliop, salario, t_loc, fac, clase1,
+                         clase2, ent, ingocup, mun)]
   
   df <- df[df2, on = .(foliop)
            ][, c("ocupado","p6b2","p6c") := 
@@ -221,7 +229,9 @@ fx.ingreso <- function(x) {
                  as.numeric(p6b2),
                  as.numeric(p6c))
              ][p6b2==999998 | p6b2==999999,  p6b2 := NA
-               ][, ingreso := if_else(ocupado == 0 | (is.na(p6b2) & (p6_9==9 | p6a3==3)), 0, p6b2)
+               ][, ingreso := if_else(ocupado == 0 | 
+                                        (is.na(p6b2) & (p6_9==9 | p6a3==3)),
+                                      0, p6b2)
                  ][is.na(p6b2) & (p6c==1), ingreso := salario * 0.5
                    ][is.na(p6b2) & p6c==2, ingreso := salario * 1
                      ][is.na(p6b2) & p6c==3, ingreso := salario * 1.5
@@ -233,36 +243,45 @@ fx.ingreso <- function(x) {
                                  c("factor", "tamh", "rururb", "ent", "mv") :=
                                    .(fac,
                                      1,
-                                     if_else((as.numeric(t_loc)>=1 & as.numeric(t_loc)<=3), 0, 1),
+                                     if_else((as.numeric(t_loc)>=1 &
+                                                as.numeric(t_loc)<=3), 0, 1),
                                      as.numeric(ent),
-                                     if_else(is.na(ingreso) & ocupado == 1, 1, 0))][
-                                       , .(folioh, tamh, ingreso, rururb, factor, ent, mun, mv, ocupado)
-                                       ][, .(tamh = sum(tamh),
-                                             ingreso = sum(ingreso),
-                                             mv = sum(mv), 
-                                             ocupado = sum(ocupado),
-                                             rururb = rururb[1], 
-                                             factor = factor[1], 
-                                             ent = ent[1], 
-                                             mun = mun[1]), by=.(folioh)
-                                         ][, .(folioh, tamh, ingreso, mv, ocupado, rururb, factor, ent, mun)
-                                           ][, mv := if_else(!is.na(mv) & mv > 0, 1, 0)][mv != 1]
+                                     if_else(is.na(ingreso) & 
+                                               ocupado == 1, 1, 0))
+                                 ][
+                                   , .(folioh, tamh, ingreso, rururb, 
+                                       factor, ent, mun, mv, ocupado)
+                                   ][, .(tamh = sum(tamh),
+                                         ingreso = sum(ingreso),
+                                         mv = sum(mv), 
+                                         ocupado = sum(ocupado),
+                                         rururb = rururb[1], 
+                                         factor = factor[1], 
+                                         ent = ent[1], 
+                                         mun = mun[1]), by=.(folioh)
+                                     ][, .(folioh, tamh, ingreso, mv, 
+                                           ocupado, rururb, factor, ent, mun)
+                                       ][, mv := if_else(!is.na(mv) &
+                                                           mv > 0, 1, 0)
+                                         ][mv != 1]
   
   
   ####################################################
   #
   # Parte III COMPARACISN DEL INGRESO DEL HOGAR CON 
-  # EL PROMEDIO DE LA LINEA DE BIENESTAR MMNIMO :
+  # EL PROMEDIO DE LA LINEA DE BIENESTAR MíNIMO :
   # 
   ####################################################  
-  df <- mutate(df, factorp = df$factor * df$tamh,
-               pob = if_else(rururb == 0,
-                             if_else((ingreso / tamh) < lineas$lpei_u[lineas$periodo== x],1,0),
-                             if_else((ingreso / tamh) < lineas$lpei_r[lineas$periodo== x],1,0)),
-               ingpc = ingreso / tamh)
-                                     
-  df$ingpcdef <- NA
+  df <- df[, c("factorp", "pob", "ingpc", "ingpcdef") := 
+             .(factor * tamh,
+               case_when(rururb == 0 & (ingreso / tamh) < lineas$lpei_u[lineas$periodo== x] ~ 1,
+                         rururb == 1 & (ingreso / tamh) < lineas$lpei_r[lineas$periodo== x] ~ 1,
+                         TRUE ~ 0),
+               ingreso / tamh,
+               NA_real_)] 
+  
   num <- as.numeric(substr(x,2,5))
+  df <- as.data.frame(df)
   df$ingpcdef[df$rururb==0] <- df$ingpc[df$rururb==0] / df.ca$df.ca.u[df.ca$periodo==num]
   df$ingpcdef[df$rururb==1] <- df$ingpc[df$rururb==1] / df.ca$df.ca.r[df.ca$periodo==num]
   #Antes del disenio
@@ -312,19 +331,19 @@ if(todas.bases){
   for (i in 2:length(f)) {
     df <- bind_rows(df, f[[i]])
   }
-  fwrite(df, "temp/temporal.csv")
+  fwrite(df, here::here("temp", "temporal.csv"))
 } else {
-  df <- fread("temp/temporal.csv")
+  df <- fread(here::here("temp", "temporal.csv"))
   df <- filter(df, periodo != tx[length(tx)])
   f <- fx.ingreso(tx[length(tx)])
   df <- bind_rows(df, f)
   
-  fwrite(df, "temp/temporal.csv")
+  fwrite(df, here::here("temp", "temporal.csv"))
 }
 
 
 
-### df <- fread("temp/temporal.csv")
+### df <- fread(here::here("temp", "temporal.csv"))
 
 df4 <-dplyr::select(df, periodo, starts_with("ingpcdef")) %>% 
   mutate(periodo = substr(periodo, 2, 5))
@@ -389,11 +408,11 @@ df4 <- data.frame(periodo = df4[,1],sapply(df4[,-1], FUN=round, digits=2))
 names(df) <- c("periodo", "Nacional", "Urbano", "Rural", n.ingpc[-c(1,2)])
 names(df7) <- c("periodo", "Nacional", "Urbano", "Rural", n.ingpc[-c(1,2)])
 
-fwrite(df, "temp/ITLP IS.csv")
-fwrite(df2, "temp/IL-Corriente.csv")
-fwrite(df3, "temp/IL-INPC.csv")
-fwrite(df4, "temp/IL-CA.csv")
-fwrite(df7, "temp/TLP.csv")
+fwrite(df, here::here("temp", "ITLP IS.csv"))
+fwrite(df2, here::here("temp", "IL-Corriente.csv"))
+fwrite(df3, here::here("temp", "IL-INPC.csv"))
+fwrite(df4, here::here("temp", "IL-CA.csv"))
+fwrite(df7, here::here("temp", "TLP.csv"))
 
 ult.trim.l <- if_else(ult.trim == 1, "primer",
                       if_else(ult.trim==2, "segundo",
@@ -425,17 +444,18 @@ add_sublabs <- function(plot, sublabs){
 df.ca$inc_r <- (df.ca$df.ca.r - lag(df.ca$df.ca.r))/lag(df.ca$df.ca.r)
 df.ca$inc_u <- (df.ca$df.ca.u - lag(df.ca$df.ca.u))/lag(df.ca$df.ca.u)
 df.ca$per <- paste("t",df3$periodo, sep="")
-gdata::keep(ult.anio, ult.trim.l, ult.trim, n.periodo, n.ingpc,df,df2,df3,df4,df7, df.ca,add_sublabs, sure=T)
-save.image(file="datos_final.RData")
+gdata::keep(ult.anio, ult.trim.l, ult.trim, n.periodo, n.ingpc, df, df2, df3,
+            df4, df7, df.ca, add_sublabs, tiempo, sure=T)
+save.image(file=here::here("datos_final.RData"))
 
 
 library("rmarkdown")
-#rmarkdown::render("presentaciones\\Ing-laboral.Rmd", encoding="UTF-8",
+#rmarkdown::render(here::here("presentaciones", "Ing-laboral.Rmd"), encoding="UTF-8",
 #                  output_options = 
 #                    list(pandoc_args = 
 #                           c(paste("--metadata=subtitle:\"",
 #                                   paste(stringr::str_to_title(ult.trim.l)," trimestre de 20", ult.anio, sep=""),
 #                                   "\"", sep=""))))
 
-rmarkdown::render("presentaciones\\Comunicado de prensa.Rmd", encoding="UTF-8")
+rmarkdown::render(here::here("presentaciones", "Comunicado de prensa.Rmd"), encoding="UTF-8")
 Sys.time() - tiempo
