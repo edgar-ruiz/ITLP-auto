@@ -12,8 +12,8 @@ library(pacman)
 p_load("data.table", "haven", "foreign",
        "tidyverse", "srvyr", "lubridate", "here",
        "gdata", "grid", "gtable", "gridExtra", "httr", "jsonlite", "rmarkdown")
-destino <- here::here("bases", "ENIGH_desc")
-dest.dir <- here::here("bases", "ENIGH_util")
+destino <- here::here("bases", "ENOE_desc")
+dest.dir <- here::here("bases", "ENOE_util")
 
 url2 <- "https://www.inegi.org.mx/contenidos/programas/enoe/15ymas/microdatos/20"
 
@@ -193,7 +193,7 @@ df.inpc$def <- df.inpc$inpc_t / df.inpc$inpc_t[df.inpc$tx=="t110"]
 
 fx.ingreso <- function(x) {
   num <- as.numeric(substr(x,2,5))
-  df <- fread(here::here("bases", "ENIGH_util", paste0("coe2", x, ".csv", sep="")))
+  df <- fread(here::here("bases", "ENOE_util", paste0("coe2", x, ".csv", sep="")))
   colnames(df) <- tolower(colnames(df))
   df <- df[, c("cd_a", "ent", "con", "v_sel", "n_ren") :=
              .(str_pad(cd_a, 2, "left", "0"),
@@ -204,7 +204,7 @@ fx.ingreso <- function(x) {
   df <- df[,foliop := paste0(cd_a, ent, con, v_sel,n_hog, h_mud, n_ren, sep="")
            ][, .(foliop, p6c, p6b2, p6_9, p6a3)]
   
-  df2 <- fread(here::here("bases", "ENIGH_util", paste0("sdem", x, ".csv", sep="")))
+  df2 <- fread(here::here("bases", "ENOE_util", paste0("sdem", x, ".csv", sep="")))
   colnames(df2) <- tolower(colnames(df2))
   df2 <- df2[, c("cd_a", "ent", "con", "v_sel", "n_ren") :=
                .(str_pad(cd_a, 2, "left", "0"),
