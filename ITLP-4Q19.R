@@ -4,7 +4,7 @@ rm(list=ls())
 tiempo <- Sys.time()
 ult.anio <- 18
 ult.trim <- 4
-todas.bases <- TRUE
+todas.bases <- FALSE
 
 if (!require(pacman)) install.packages("pacman") 
 library(pacman)
@@ -219,7 +219,7 @@ fx.ingreso <- function(x) {
                  .(paste0(cd_a, ent, con, v_sel, n_hog, h_mud, sep=""),
                    paste0(cd_a, ent, con, v_sel, n_hog, h_mud, n_ren, sep=""))][
                      , .(folioh, foliop, salario, t_loc, fac, clase1,
-                         clase2, ent, ingocup, mun, sex,  dur_est, rama_est2, 
+                         clase2, ent, ingocup, mun, sex,  dur_est, rama, 
                          est_d, upm)]
   
   df <- df[df2, on = .(foliop)
@@ -250,7 +250,7 @@ fx.ingreso <- function(x) {
                                  ][
                                    , .(folioh, foliop, tamh, ingreso, rururb, 
                                        factor, ent, mun, mv, ocupado,
-                                       sex, dur_est, rama_est2, est_d, upm)
+                                       sex, dur_est, rama, est_d, upm)
                                    ]
   
   df_ocupados <- df[, .(tamh = sum(tamh),
@@ -263,7 +263,7 @@ fx.ingreso <- function(x) {
                         ent = ent[1], 
                         mun = mun[1],
                         horas = dur_est[1],
-                        rama = rama_est2[1],
+                        rama = rama[1],
                         est_d = est_d[1],
                         upm = upm[1]), by=.(foliop)
                     ][, .(foliop, tamh, ingreso, mv, sex,ocupado, rururb, factor, ent, mun, horas, rama, est_d, upm)
