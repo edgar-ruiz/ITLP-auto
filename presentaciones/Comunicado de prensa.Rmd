@@ -4,23 +4,21 @@ author: "Consejo Nacional de Evaluación de la Política de Desarrollo Social"
 date: "Ciudad de México, 14 de febrero de 2019"
 output: word_document
 ---
-```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, prompt=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+
 library(stringr)
 library(tidyverse)
-load("datos_final.RData")
+load("Comunicado de prensa\\datos_final.RData")
 per_t <- paste("t", ult.trim, ult.anio, sep="")
 tlp_n_per <- round(df7$Nacional[df7$periodo==per_t], 1)
 per_t_mens <- paste("t", if_else(ult.trim ==1, 4, ult.trim-1), if_else(ult.trim==1, ult.anio-1, ult.anio), sep="")
-per_t_mens3 <- paste("t",if_else(substr(per_t,2,2)==4, 2,
-                       if_else(substr(per_t,2,2)==3, 1,
-                               if_else(substr(per_t,2,2)==2, 4, 3))),
-                     if_else(substr(per_t,2,2)>=3, ult.anio, ult.anio-1), sep="")
 tlp_n_per_mens <- round(df7$Nacional[df7$periodo==per_t_mens], 1)
-tlp_aum_dis <- if_else(tlp_n_per > tlp_n_per_mens, "aumentó", "disminuyó")
+tlp_aum_dis <- if_else(df7$Nacional[df7$periodo==per_t] > df7$Nacional[df7$periodo==per_t_mens], "aumentó", "disminuyó")
 comp_mens <- if_else(ult.trim == 1, "cuarto",
                       if_else(ult.trim==2, "primero",
                               if_else(ult.trim==3, "segundo", "tercer")))
@@ -42,36 +40,21 @@ tend_text2 <- if_else(tend2, "De igual forma,", "En contraste,")
 
 cambio_il <- round(((il_inpc-il_inpc_mens)/il_inpc_mens)*100,1)
 sube_o_b <- cambio_il >= 0
-
+text_il <- if_else(sube_o_b, "un aumento", "una disminución")
+text_il_ing <- if_else(sube_o_b, "aumento", "disminuyó")
 cambio_il_anu <- round(((il_inpc-il_inpc_anual)/il_inpc_anual)*100,1)
 sube_o_b_anu <- cambio_il_anu >= 0
 text_il_ing_anu <- if_else(sube_o_b_anu, "un aumento", "una disminución")
-text_il_ing <- if_else(sube_o_b, "aumento", "disminuyó")
 
-il_inpc2 <- round(df3$Nacional[df7$periodo==per_t_mens], 2)
-il_inpc_mens2 <- round(df3$Nacional[df7$periodo==per_t_mens3], 2)
-cambio_il2 <- round(((il_inpc2-il_inpc_mens2)/il_inpc_mens2)*100,1)
-sube_o_b2 <- cambio_il2 >= 0
-text_il3 <- if_else(sube_o_b2, "aumentó", "disminuyó")
-
-cambio_il7 <- round(((il_inpc_anual-il_inpc)/il_inpc_anual)*100,1)
-sube_o_b7 <- cambio_il7 >= 0
-text_il7 <- if_else(sube_o_b7, "aumentó", "disminuyó")
-
-
-text_il <- if_else(sube_o_b, "un aumento", "una disminución")
-text_il2 <- if_else(sube_o_b, "aumentó", "disminuyó")
-text_il5 <- if_else(sube_o_b2, "un aumento", "una disminución")
-
-text_il4 <- if_else(text_il3 == text_il2, "En el mismo sentido que", "en contraste con")
 df_ent_tlp <- tail(df7,2)
 df_ent_tlp <- tidyr::gather(df_ent_tlp, "entidad", "valor", -periodo)
 df_ent_tlp <- tidyr::spread(df_ent_tlp, "periodo", "valor")
 df_ent_tlp$cambio <- df_ent_tlp[,2] - df_ent_tlp[,3]
 df_ent_tlp <- dplyr::filter(df_ent_tlp, !(entidad %in% c("Nacional", "Rural", "Urbano") )) %>%
   arrange(cambio)
+df_ent_tlp$cambio2 <- df_ent_tlp$cambio
 df_ent_tlp$cambio <- round(df_ent_tlp$cambio, 1)
-cuantos_tlp <- sum(df_ent_tlp$cambio< 0.00000000000000000001)
+cuantos_tlp <- sum(df_ent_tlp$cambio2< 0.00000000000000000001)
 
 
 per_t2 <- substr(per_t,2,5)
@@ -102,89 +85,62 @@ itlp_n_per_anual_r <- round(df$Rural[df$periodo==per_t_anu2], 4)
 itlp_aum_dis_anual_r <- if_else(itlp_n_per_r > itlp_n_per_anual_r, "aumentó", "disminuyó")
 
 
-
 cambio_itlp<- round(((itlp_n_per/itlp_n_per_mens)-1)*100,1)
 cambio_itlp_a<- round(((itlp_n_per/itlp_n_per_anual)-1)*100,1)
 cambio_itlp_u<- round(((itlp_n_per_u/itlp_n_per_mens_u)-1)*100,1)
 cambio_itlp_r<- round(((itlp_n_per_r/itlp_n_per_mens_r)-1)*100,1)
 
-text_il6 <- if_else(text_il4 == "en contraste con", "pero", "mientras que")
+cambio_ing<- round(((il_inpc/il_inpc_mens)-1)*100,1)
+
 
 ```
 
 
-
-
-##Bullets para la presentación de Gonzálo
-
-#Variación trimestral 
-*	El poder adquisitivo del ingreso laboral `r text_il_ing` `r abs(cambio_il)`% real entre el `r comp_mens2` 20`r ult.anio`, (análisis) en contraste con el trimestre anterior donde se observó un aumento. 
-
-*	El porcentaje de la población con un ingreso laboral inferior al costo de la canasta alimentaria `r tlp_aum_dis` de `r tlp_n_per_mens`% a `r tlp_n_per`% de la población entre el  `r comp_mens2` 20`r ult.anio`.
-
-*	El Índice de la Tendencia Laboral de la Pobreza (ITLP) `r itlp_aum_dis` de `r itlp_n_per_mens` en el `r comp_mens` trimestre a `r itlp_n_per` en el `r ult.trim.l` de trimestre 20`r ult.anio`, lo cual representó un `r itlp_aum_dis` de `r cambio_itlp` por ciento.
-
-
-Entre los puntos que explican el `r tlp_aum_dis` trimestral del porcentaje se encuentran los siguientes: (análisis)
-
-*	`r text_il_ing` del poder adquisitivo del ingreso laboral (`r abs(cambio_il)`% trimestral)
-
-*	**(Análisis)** Aumento del número de desocupados (76 mil personas más) y
-
-*	**(Análisis)**Un mayor crecimiento trimestral de las líneas de pobreza extrema por ingresos: durante el `r ult.trim.l` trimestre de 20`r ult.anio`, la línea de pobreza extrema por ingresos aumentó `r round(df.ca$inc_r[df.ca$per==per_t] * 100,1) `% en las zonas rurales y `r round(df.ca$inc_u[df.ca$per==per_t] * 100,1) `% en zonas urbanas respecto al `r comp_mens` trimestre de 20XX.
-
-
-#Variación anual
-*	El poder adquisitivo del ingreso laboral mostró `r text_il_ing_anu` real de `r cambio_il_anu`%, respecto al `r ult.trim.l` trimestre de 20`r ult.anio-1`.
-
-*	El porcentaje de la población con ingreso laboral inferior al costo de la canasta alimentaria mostró un `r tlp_aum_dis_anual` de `r tlp_n_per_anual`  a `r tlp_n_per` por ciento entre el `r comp_mens` trimestre de 20`r ult.anio-1` y el `r ult.trim.l` de trimestre de 20`r ult.anio`.
-
-*	El ITLP mostró un `r itlp_aum_dis_anual` de `r cambio_itlp_a`%., al pasar de `r itlp_n_per_anual` en el `r ult.trim.l` trimestre de 20`r ult.anio-1` a `r itlp_n_per` en el `r ult.trim.l` de trimestre 20`r ult.anio`.
-
-Entre los puntos que explican la disminución anual del porcentaje se encuentra:  
-  
-*	(Análisis) El aumento del ingreso laboral real y un menor aumento de las líneas de pobreza extrema por ingresos.
-
-## CONEVAL PRESENTA INFORMACIÓN REFERENTE AL ÍNDICE DE TENDENCIA LABORAL DE LA POBREZA AL `r str_to_upper(ult.trim.l)` TRIMESTRE DE `r ult.anio`
+## CONEVAL PRESENTA INFORMACIÓN REFERENTE AL ÍNDICE DE TENDENCIA LABORAL DE LA POBREZA AL `r str_to_upper(ult.trim.l)` TRIMESTRE DE 20`r ult.anio` 
 
 * La población con ingreso laboral inferior al costo de la canasta alimentaria (pobreza laboral) `r tlp_aum_dis` de `r tlp_n_per_mens`% a `r tlp_n_per`% entre el `r comp_mens2` 20`r ult.anio`, debido a ... 
 
 * `r tend_text` dicho porcentaje `r tlp_aum_dis_anual` respecto al `r ult.trim.l` de trimestre 20`r ult.anio-1`, al pasar de `r tlp_n_per_anual`% a `r tlp_n_per`% de la población con ingreso laboral inferior al costo de la canasta alimentaria (pobreza laboral).
 
 
-* El poder adquisitivo del ingreso laboral disminuyó / aumentó desde finales de 2017, sin embargo / de igual forma en el `r ult.trim.l` trimestre de 20`r ult.anio` tuvo `r text_il` de `r abs(cambio_il)`% respecto al trimestre anterior. El CONEVAL seguirá monitoreando la inflación de inicio de año con el objetivo de
-informar si continúa la tendencia de recuperación del poder adquisitivo observada en el periodo 2016-2017.
+* El poder adquisitivo del ingreso laboral ha `r tlp_aum_dis` desde finales de 20`r ult.anio-1`, pero en el `r ult.trim.l` trimestre de 20`r ult.anio` tuvo `r text_il` de `r abs(cambio_il)`% respecto al trimestre anterior. El CONEVAL seguirá monitoreando la inflación al cierre del año con el objetivo de
+informar si continúa la tendencia de recuperación del poder adquisitivo observada
+en el periodo 2016-2017.
 
 
 * En el último trimestre, en `r cuantos_tlp` de las 32 entidades federativas aumentó el porcentaje de población que no puede adquirir la canasta alimentaria con su ingreso laboral. Destacan los estados de `r df_ent_tlp$entidad[1]`, `r df_ent_tlp$entidad[2]` y `r df_ent_tlp$entidad[3]`.
 
 ### Variación del poder adquisitivo del ingreso laboral y población con un ingreso laboral inferior a la Línea de Pobreza Extrema por Ingresos
-El ingreso laboral per cápita real tuvo `r text_il` trimestral de `r abs(cambio_il)`% entre el `r comp_mens2` 20`r ult.anio`, al pasar de \$`r format(il_inpc_mens,  big.mark=",", scientific=FALSE)` a \$`r format(il_inpc, big.mark=",", scientific=FALSE)`, de manera anual se observa `r if_else(text_il7=="disminuyó", "una disminución", "un aumento")` de `r abs(cambio_il7)`% entre el `r ult.trim.l` trimestre de 20`r ult.anio-1` y el `r ult.trim.l` trimestre de 20`r ult.anio`. **(Análisis)** El ingreso laboral per cápita real en el tercer trimestre de 2018 es mayor que el observado en el segundo trimestre de 2016, pero aún es menor que el presentado en el mismo periodo de 2008.
+
+El ingreso laboral per cápita real tuvo `r text_il` trimestral de `r abs(cambio_il)`% entre el `r comp_mens2` 20`r ult.anio`, al pasar de \$`r format(il_inpc_mens,  big.mark=",", scientific=FALSE)` a \$`r format(il_inpc, big.mark=",", scientific=FALSE)`. De manera anual, se observa `r text_il_ing_anu` de `r cambio_il_anu`% entre el `r ult.trim.l` trimestre de 20`r ult.anio-1` y el `r ult.trim.l` trimestre de 20`r ult.anio`. El ingreso
+laboral per cápita real en el `r ult.trim.l` trimestre de 20`r ult.anio-1` es (Análisis del ingreso laboral...) menor al observado en los primeros tres trimestres del año, pero superior al observado en cada trimestre de 2017. 
 
 ##Gráfica Ingreso Laboral Real
 
-**(Análisis)**Como consecuencia de esta variación en el poder adquisitivo del ingreso laboral y de un mayor crecimiento en los precios tanto en zonas rurales como urbanas, la población con un ingreso laboral inferior a la Línea de Pobreza Extrema por Ingresos (canasta alimentaria) `r tlp_aum_dis` de `r tlp_n_per_mens`% a `r tlp_n_per`% entre el `r comp_mens2` 20`r ult.anio`.
+Como consecuencia de esta variación en el poder adquisitivo del ingreso laboral y de un mayor crecimiento en los precios tanto en zonas rurales como urbanas, la población con un ingreso laboral inferior a la Línea de Pobreza Extrema por Ingresos (canasta alimentaria) `r tlp_aum_dis` de `r tlp_n_per_mens`% a `r tlp_n_per`% entre el `r comp_mens2` 20`r ult.anio`.
 
-En este periodo, la Línea de Pobreza Extrema por Ingresos (costo de la canasta alimentaria) mostró `r if_else(df.ca$inc_r[df.ca$per==per_t]>=0, "un aumento", "una disminución" )` mayor `r if_else(df.ca$inc_r[df.ca$per==per_t]>=0, "al observado", "a la observada" )` en el trimestre pasado (de `r round(df.ca$inc_r[df.ca$per==per_t] * 100,1) `% en zonas rurales y `r round(df.ca$inc_u[df.ca$per==per_t] * 100,1) `% en zonas urbanas), lo que representa `r if_else(df.ca$inc_r[df.ca$per==per_t]>=0, "el mayor aumento observado", "la menor disminución observada" )` desde **(Análisis)**. 
+En este periodo, la Línea de Pobreza Extrema por Ingresos (costo de la canasta alimentaria) mostró `r if_else(df.ca$inc_r[df.ca$per==per_t]>=0, "un aumento", "una disminución" )` mayor `r if_else(df.ca$inc_r[df.ca$per==per_t]>=0, "al observado", "a la observada" )` en el trimestre pasado (de `r round(df.ca$inc_r[df.ca$per==per_t] * 100,1) `% en zonas rurales y `r round(df.ca$inc_u[df.ca$per==per_t] * 100,1) `% en zonas urbanas), lo que representa `r if_else(df.ca$inc_r[df.ca$per==per_t]>=0, "el mayor aumento observado", "la menor disminución observada" )` desde **(Análisis)**.
 
 ##Gráfica Porcentaje de la población con ingreso laboral inferior al costo de la canasta alimentaria
 
-`r tend_text2` el cambio anual en el porcentaje de la población con un ingreso laboral inferior al costo de la canasta alimentaria presentó un `r tlp_aum_dis` al pasar de `r tlp_n_per_anual`% a `r tlp_n_per`% entre el `r ult.trim.l` trimestre de 20`r ult.anio-1` y el `r ult.trim.l` trimestre de 20`r ult.anio`. Entre los puntos que explican `r if_else(tlp_aum_dis=="aumentó", "el incremento", "la disminución")` anual del porcentaje se encuentra `r if_else(text_il7=="disminuyó", "una disminución", "un aumento")` anual del ingreso laboral real. 
+`r tend_text2` el cambio anual en el porcentaje de la población con un ingreso laboral inferior al costo de la canasta alimentaria presentó un `r tlp_aum_dis` al pasar de `r tlp_n_per_anual`% a `r tlp_n_per`% entre el `r ult.trim.l` trimestre de 20`r ult.anio-1` y el `r ult.trim.l` trimestre de 20`r ult.anio`. Entre los puntos que explican `r tlp_aum_dis` anual del porcentaje se encuentra el aumento del ingreso laboral real de 2.9% al pasar de $`r il_inpc_anual`a $`r il_inpc` pesos mensuales. 
 
-###Variación trimestral del ITLP entre el `r comp_mens2` 20`r ult.anio`.
+###Variación trimestral del ITLP entre el `r comp_mens2` 20`r ult.anio`	
 
-Entre el `r comp_mens2` 20`r ult.anio`, el Índice de la Tendencia Laboral de la Pobreza (ITLP) presentó un `r itlp_aum_dis` de `r cambio_itlp`%, al pasar de `r itlp_n_per_mens` a `r itlp_n_per`. Este cambio en el ITLP se debió principalmente a `r if_else(text_il=="una disminución", "la disminución", "el aumento")` en el poder adquisitivo del ingreso laboral y a `r if_else(df.ca$inc_r[df.ca$per==per_t]>=0, "un aumento", "una disminución" )` del costo de la canasta alimentaria. 
+Entre el `r comp_mens2` 20`r ult.anio`, el Índice de la Tendencia Laboral de la Pobreza (ITLP) presentó un `r itlp_aum_dis` de `r cambio_itlp`%, al pasar de `r itlp_n_per_mens` a `r itlp_n_per`. Este cambio en el ITLP se debió principalmente a la disminución en el poder adquisitivo del ingreso laboral y a un mayor aumento del costo de la canasta alimentaria. 
 
-**(Análisis)**Esta tendencia se observa tanto en zonas rurales como urbanas; no obstante, el aumento trimestral del ITLP es más pronunciado en las zonas rurales. En el ámbito rural, el ITLP tuvo `r if_else(cambio_itlp_u>=0, "un aumento", "una disminución")` de `r cambio_itlp_u`% trimestral, mientras que en zonas urbanas `r if_else(cambio_itlp_u>=0, "el aumento", "la disminución")` fue de `r cambio_itlp_r`%. **(Análisis)**En contraste con el trimestre anterior, el ILTP disminuyó tanto en zonas rurales como urbanas. 
+#(ANÁLISIS RURAL URBANO)
+Esta tendencia se observa tanto en zonas rurales como urbanas; no obstante, el aumento trimestral del ITLP es más pronunciado en las zonas rurales. En el ámbito rural, el ITLP tuvo un `r if else(cambio_itlp_u>=0, "un incremento") de `r cambio_itlp_r`% trimestral, mientras que en zonas urbanas el aumento fue de `r cambio_itlp_u`%. En contraste con el trimestre anterior, el ILTP disminuyó tanto en zonas rurales como urbanas. 
 
-###Variación anual del ITLP del `r ult.trim.l`. trimestre de 20`r ult.anio`. 
-En la variación anual, se reportó `r if_else(cambio_itlp_a>=0, "un aumento", "unaa disminución")` de `r abs(cambio_itlp_a)`% en el ITLP, al pasar de `r itlp_n_per_anual` a `r itlp_n_per` entre el `r ult.trim.l`. trimestre de 20`r ult.anio`.
+En la variación anual, se reportó una disminución de `r abs(cambio_itlp_a)`% en el ITLP, al pasar de `r itlp_n_per_anual` a `r itlp_n_per` entre el `r ult.trim.l` trimestre de 20`r ult.anio-1` y el `r ult.trim.l` trimestre de 20`r ult.anio`.
 
 ###Gráfica ITLP NACIONAL
 
 ### Variación del porcentaje de población con un ingreso laboral inferior a la Línea de Pobreza Extrema por Ingresos a nivel de entidad federativa entre el `r comp_mens2` 20`r ult.anio`.
 
-En `r cuantos_tlp` de las 32 entidades federativas aumentó el porcentaje de población que no puede adquirir la canasta alimentaria con su ingreso laboral. Destacan los estados de `r df_ent_tlp$entidad[1]`, `r df_ent_tlp$entidad[2]` y `r df_ent_tlp$entidad[3]` con aumentos de `r abs(df_ent_tlp$cambio[1])`, `r abs(df_ent_tlp$cambio[2])` y `r abs(df_ent_tlp$cambio[3])` puntos porcentuales entre el segundo y tercer trimestre de 20`r ult.anio`, respectivamente. En contraste, en el mismo periodo, los tres estados con mayores reducciones en el porcentaje de población que no puede adquirir la canasta alimentaria con su ingreso laboral fueron: `r df_ent_tlp$entidad[32]` `r abs(df_ent_tlp$cambio[32])`, `r df_ent_tlp$entidad[31]` `r abs(df_ent_tlp$cambio[31])` y `r df_ent_tlp$entidad[30]` (`r abs(df_ent_tlp$cambio[30])`%).
+
+
+En `r cuantos_tlp` de las 32 entidades federativas aumentó el porcentaje de población que no puede adquirir la canasta alimentaria con su ingreso laboral. Destacan los estados de `r df_ent_tlp$entidad[1]`, `r df_ent_tlp$entidad[2]` y `r df_ent_tlp$entidad[3]` con aumentos de `r abs(df_ent_tlp$cambio[1])`, `r abs(df_ent_tlp$cambio[2])` y `r abs(df_ent_tlp$cambio[3])` puntos porcentuales entre el `r comp_mens2` 20`r ult.anio`, respectivamente. En contraste, en el mismo periodo, los tres estados con mayores reducciones en el porcentaje de población que no puede adquirir la canasta alimentaria con su ingreso laboral fueron: `r df_ent_tlp$entidad[32]` `r abs(df_ent_tlp$cambio[32])`, `r df_ent_tlp$entidad[31]` `r abs(df_ent_tlp$cambio[31])` y `r df_ent_tlp$entidad[30]` (`r abs(df_ent_tlp$cambio[29])`%).
 
 
 ###Gráfica Evolución del porcentaje de la población con ingreso laboral inferior al costo de la canasta alimentaria. 
@@ -195,10 +151,13 @@ En `r cuantos_tlp` de las 32 entidades federativas aumentó el porcentaje de pob
 
 
 
+
+
+
 ###Grupos poblacionales por número de ocupados
 
 ##Ingreso laboral real promedio de la población ocupada según sexo
-Para este trimestre, CONEVAL da a conocer el ingreso laboral real promedio de la población ocupada a pesos constantes según sexo. En el `r ult.trim.l` trimestre de 20`r ult.anio`, el ingreso laboral real promedio de la población ocupada se ubicó en XX. En donde los hombres ocupados reportaron un ingreso de XX, mientras que el ingreso de las mujeres ocupadas fue de XX.
+Para este trimestre, CONEVAL da a conocer el ingreso laboral real promedio de la población ocupada a pesos constantes según sexo. En el `r ult.trim.l` trimestre de 20`r ult.anio`, el ingreso laboral real promedio de la población ocupada se ubicó en XX. En donde los hombres ocupados reportaron un ingreso de XX, mientras que el ingreso de las mujeres ocupadas fue de XX. 
 
 
 ##Gráfica sexo
