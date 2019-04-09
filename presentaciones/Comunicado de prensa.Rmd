@@ -18,7 +18,7 @@ per_t <- paste("t", ult.trim, ult.anio, sep="")
 tlp_n_per <- round(df7$Nacional[df7$periodo==per_t], 1)
 per_t_mens <- paste("t", if_else(ult.trim ==1, 4, ult.trim-1), if_else(ult.trim==1, ult.anio-1, ult.anio), sep="")
 tlp_n_per_mens <- round(df7$Nacional[df7$periodo==per_t_mens], 1)
-tlp_aum_dis <- if_else(df7$Nacional[df7$periodo==per_t] > df7$Nacional[df7$periodo==per_t_mens], "aumento", "disminución")
+tlp_aum_dis <- if_else(df7$Nacional[df7$periodo==per_t] > df7$Nacional[df7$periodo==per_t_mens], "aumentó", "disminuyó")
 comp_mens <- if_else(ult.trim == 1, "cuarto",
                       if_else(ult.trim==2, "primero",
                               if_else(ult.trim==3, "segundo", "tercer")))
@@ -123,7 +123,7 @@ En este periodo, la Línea de Pobreza Extrema por Ingresos (costo de la canasta 
 
 ##Gráfica Porcentaje de la población con ingreso laboral inferior al costo de la canasta alimentaria
 
-`r tend_text2` el cambio anual en el porcentaje de la población con un ingreso laboral inferior al costo de la canasta alimentaria presentó un `r tlp_aum_dis` al pasar de `r tlp_n_per_anual`% a `r tlp_n_per`% entre el `r ult.trim.l` trimestre de 20`r ult.anio-1` y el `r ult.trim.l` trimestre de 20`r ult.anio`. Entre los puntos que explican `r tlp_aum_dis` anual del porcentaje se encuentra el aumento del ingreso laboral real de 2.9% al pasar de $`r il_inpc_anual`a $`r il_inpc` pesos mensuales. 
+`r tend_text2` el cambio anual en el porcentaje de la población con un ingreso laboral inferior al costo de la canasta alimentaria presentó un `r if_else(tlp_n_per_anual<tlp_n_per, "aumento", "disminución")` al pasar de `r tlp_n_per_anual`% a `r tlp_n_per`% entre el `r ult.trim.l` trimestre de 20`r ult.anio-1` y el `r ult.trim.l` trimestre de 20`r ult.anio`. Entre los puntos que explican `r tlp_aum_dis` anual del porcentaje se encuentra el aumento del ingreso laboral real de 2.9% al pasar de $`r il_inpc_anual`a $`r il_inpc` pesos mensuales. 
 
 ###Variación trimestral del ITLP entre el `r comp_mens2` 20`r ult.anio`	
 
