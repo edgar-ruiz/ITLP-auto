@@ -13,12 +13,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(stringr)
 library(tidyverse)
-load("Comunicado de prensa\\datos_final.RData")
+load(here::here("datos_final.RData"))
 per_t <- paste("t", ult.trim, ult.anio, sep="")
 tlp_n_per <- round(df7$Nacional[df7$periodo==per_t], 1)
 per_t_mens <- paste("t", if_else(ult.trim ==1, 4, ult.trim-1), if_else(ult.trim==1, ult.anio-1, ult.anio), sep="")
 tlp_n_per_mens <- round(df7$Nacional[df7$periodo==per_t_mens], 1)
-tlp_aum_dis <- if_else(df7$Nacional[df7$periodo==per_t] > df7$Nacional[df7$periodo==per_t_mens], "aumentó", "disminuyó")
+tlp_aum_dis <- if_else(df7$Nacional[df7$periodo==per_t] > df7$Nacional[df7$periodo==per_t_mens], "aumento", "disminución")
 comp_mens <- if_else(ult.trim == 1, "cuarto",
                       if_else(ult.trim==2, "primero",
                               if_else(ult.trim==3, "segundo", "tercer")))
@@ -130,7 +130,7 @@ En este periodo, la Línea de Pobreza Extrema por Ingresos (costo de la canasta 
 Entre el `r comp_mens2` 20`r ult.anio`, el Índice de la Tendencia Laboral de la Pobreza (ITLP) presentó un `r itlp_aum_dis` de `r cambio_itlp`%, al pasar de `r itlp_n_per_mens` a `r itlp_n_per`. Este cambio en el ITLP se debió principalmente a la disminución en el poder adquisitivo del ingreso laboral y a un mayor aumento del costo de la canasta alimentaria. 
 
 #(ANÁLISIS RURAL URBANO)
-Esta tendencia se observa tanto en zonas rurales como urbanas; no obstante, el aumento trimestral del ITLP es más pronunciado en las zonas rurales. En el ámbito rural, el ITLP tuvo un `r if else(cambio_itlp_u>=0, "un incremento") de `r cambio_itlp_r`% trimestral, mientras que en zonas urbanas el aumento fue de `r cambio_itlp_u`%. En contraste con el trimestre anterior, el ILTP disminuyó tanto en zonas rurales como urbanas. 
+Esta tendencia se observa tanto en zonas rurales como urbanas; no obstante, el aumento trimestral del ITLP es más pronunciado en las zonas rurales. En el ámbito rural, el ITLP tuvo un `r if_else(cambio_itlp_u>=0, "un incremento", "una disminución")` de `r cambio_itlp_r`% trimestral, mientras que en zonas urbanas el aumento fue de `r cambio_itlp_u`%. En contraste con el trimestre anterior, el ITLP disminuyó tanto en zonas rurales como urbanas. 
 
 En la variación anual, se reportó una disminución de `r abs(cambio_itlp_a)`% en el ITLP, al pasar de `r itlp_n_per_anual` a `r itlp_n_per` entre el `r ult.trim.l` trimestre de 20`r ult.anio-1` y el `r ult.trim.l` trimestre de 20`r ult.anio`.
 
@@ -190,6 +190,4 @@ Ni el ITLP ni el porcentaje de la población con ingreso laboral inferior a la L
 
 Sin embargo, estas dos variables sirven como señal preventiva de corto plazo sobre el ingreso laboral
 de las familias y su relación con la evolución del valor de la canasta alimentaria, es decir, sobre el poder adquisitivo del ingreso laboral de los hogares.
-
-
 
