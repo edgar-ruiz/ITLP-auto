@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(stringr)
 library(tidyverse)
-load("Comunicado de prensa\\datos_final.RData")
+load(here::here("datos_final.RData"))
 per_t <- paste("t", ult.trim, ult.anio, sep="")
 tlp_n_per <- round(df7$Nacional[df7$periodo==per_t], 1)
 per_t_mens <- paste("t", if_else(ult.trim ==1, 4, ult.trim-1), if_else(ult.trim==1, ult.anio-1, ult.anio), sep="")
