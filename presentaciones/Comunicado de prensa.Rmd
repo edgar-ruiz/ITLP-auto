@@ -118,7 +118,9 @@ text_il6 <- if_else(text_il4 == "en contraste con", "pero", "mientras que")
 ##Bullets para la presentación de Gonzálo
 
 #Variación trimestral 
-*	El poder adquisitivo del ingreso laboral `r text_il_ing` `r abs(cambio_il)`% real entre el `r comp_mens2` 20`r ult.anio`, (análisis) en contraste con el trimestre anterior donde se observó un aumento. 
+*	El poder adquisitivo del ingreso laboral ha `r tlp_aum_dis` desde finales de 20`r ult.anio-1`, pero en el `r ult.trim.l` trimestre de 20`r ult.anio` tuvo `r text_il` de `r abs(cambio_il)`% respecto al trimestre anterior. El CONEVAL seguirá monitoreando la inflación al cierre del año con el objetivo de
+informar si continúa la tendencia de recuperación del poder adquisitivo observada
+en el periodo 2016-2017.
 
 *	El porcentaje de la población con un ingreso laboral inferior al costo de la canasta alimentaria `r tlp_aum_dis` de `r tlp_n_per_mens`% a `r tlp_n_per`% de la población entre el  `r comp_mens2` 20`r ult.anio`.
 
