@@ -2,9 +2,9 @@
 
 rm(list=ls())
 tiempo <- Sys.time()
-ult.anio <- 18
-ult.trim <- 4
-todas.bases <- FALSE
+ult.anio <- 19
+ult.trim <- 1
+todas.bases <- TRUE
 
 if (!require(pacman)) install.packages("pacman") 
 library(pacman)
@@ -189,7 +189,7 @@ df_ind <- df_ind[pobi >= 0.4][, c("ent", "mun") :=
 mun_ind <- paste(df_ind$ent, df_ind$mun, sep="")
 df.inpc <- data.frame(inpc_t = v_inpc, tx)
 df.inpc$def <- df.inpc$inpc_t / df.inpc$inpc_t[df.inpc$tx=="t110"]
-#options(survey.lonely.psu="adjust")
+options(survey.lonely.psu="adjust")
 
 fx.ingreso <- function(x) {
   num <- as.numeric(substr(x,2,5))
@@ -270,7 +270,9 @@ fx.ingreso <- function(x) {
                       ][, mv := if_else(!is.na(mv) & mv > 0, 1, 0)
                         ][mv != 1
                           ][, mun_i := str_c(str_pad(ent, 2, "left", "0"),str_pad(mun, 3, "left", "0"), sep="")
-                            ][,indigena := mun_i %in% mun_ind
+                            ][,indigena := case_when(mun_i == "23011" ~ NA_real_,
+                                                     mun_i %in% mun_ind ~ 1,
+                                                     TRUE ~ 0)
                               ][ocupado==1
                                 ][, c("factorp", "pob", "ingpc") :=
                                     .(factor * tamh,
@@ -292,17 +294,20 @@ fx.ingreso <- function(x) {
              ][, mv := if_else(!is.na(mv) &
                                  mv > 0, 1, 0)
                ][mv != 1][, c("factorp", "pob", "ingpc", "ingpcdef") := 
-             .(factor * tamh,
-               case_when(rururb == 0 & (ingreso / tamh) < lineas$lpei_u[lineas$periodo== x] ~ 1,
-                         rururb == 1 & (ingreso / tamh) < lineas$lpei_r[lineas$periodo== x] ~ 1,
-                         TRUE ~ 0),
-               ingreso / tamh,
-               NA_real_)] 
-  
+                            .(factor * tamh,
+                              case_when(rururb == 0 & (ingreso / tamh) < lineas$lpei_u[lineas$periodo== x] ~ 1,
+                                        rururb == 1 & (ingreso / tamh) < lineas$lpei_r[lineas$periodo== x] ~ 1,
+                                        TRUE ~ 0),
+                              ingreso / tamh,
+                              NA_real_)] 
   num <- as.numeric(substr(x,2,5))
   df <- as.data.frame(df)
   df$ingpcdef[df$rururb==0] <- df$ingpc[df$rururb==0] / df.ca$df.ca.u[df.ca$periodo==num]
   df$ingpcdef[df$rururb==1] <- df$ingpc[df$rururb==1] / df.ca$df.ca.r[df.ca$periodo==num]
+  df_ocupados <- df_ocupados[, "region" := case_when(ent %in% c(2,8,5,19,26,28) ~ "norte",
+                                                     ent %in% c(3,1,6,10,14,16,18,24,25,32) ~ "centro norte",
+                                                     ent %in% c(9,15,11,13,17,21,22,29) ~ "centro",
+                                                     TRUE ~ "sur")]
   #Antes del disenio
   sd <- as_survey_design(df, weights = factorp)
   df.rururb <- sd %>% group_by(rururb) %>%
@@ -322,9 +327,13 @@ fx.ingreso <- function(x) {
   df_s_ingpc <- sd_i %>% group_by(sex) %>%
     summarise(ingpc = survey_mean(ingpc, na.rm=TRUE, vartype = "cv"))
   #df_sex_hrs <- sd_i %>% group_by(sex, horas) %>%
-  #  summarise(ingpc = survey_mean(ingpc, na.rm=TRUE, vartype = "cv"))
+  #  summarise(ingpc = survey_mean(ingpc, na.rm=TRUE, vartype = "cv"), pob_mean = survey_mean(pob, na.rm=TRUE, vartype = "cv"))
   #df_ind_act <- sd_i %>% group_by(indigena, rama) %>%
-  #  summarise(pob_mean = survey_mean(pob, na.rm=TRUE, vartype = "cv"))
+  #  summarise(ingpc = survey_mean(ingpc, na.rm=TRUE, vartype = "cv"), pob_mean = survey_mean(pob, na.rm=TRUE, vartype = "cv"))
+  #df_sex_reg <- sd_i %>% group_by(sex, region) %>%
+  #  summarise(ingpc = survey_mean(ingpc, na.rm=TRUE, vartype = "cv"), pob_mean = survey_mean(pob, na.rm=TRUE, vartype = "cv"))
+  #df_ind_reg <- sd_i %>% group_by(indigena, region) %>%
+  #  summarise(ingpc = survey_mean(ingpc, na.rm=TRUE, vartype = "cv"), pob_mean = survey_mean(pob, na.rm=TRUE, vartype = "cv"))
   
   df_r_i <- data.table(x = 1)
   df_r_i$TLP_i <- df_i_tlp$pob_mean[df_i_tlp$indigena==T] *100
@@ -340,13 +349,32 @@ fx.ingreso <- function(x) {
   df_r_i$ingreso_m <- df_s_ingpc$ingpc[as.numeric(df_s_ingpc$sex)==2] 
   
   #df_sex_hrs$id <- paste("S", df_sex_hrs$sex, "H", df_sex_hrs$horas, sep="")
-  #sex_hrs <- as.data.frame(t(df_sex_hrs$ingpc))
-  #colnames(sex_hrs) <- df_sex_hrs$id
+  #sex_hrs <- as.data.frame(cbind(t(df_sex_hrs$ingpc), t(df_sex_hrs$ingpc_cv),
+  #                               t(df_sex_hrs$pob_mean), t(df_sex_hrs$pob_mean_cv)))
+  #colnames(sex_hrs) <- c(paste(df_sex_hrs$id, "_i", sep=""), paste(df_sex_hrs$id, "_i_cv", sep=""),
+  #                       paste(df_sex_hrs$id, "_p", sep=""), paste(df_sex_hrs$id, "_p_cv", sep=""))
   
   #df_ind_act$id <- paste("I", as.numeric(df_ind_act$indigena), "A", df_ind_act$rama, sep="")
-  #ind_act <- as.data.frame(t(df_ind_act$pob_mean))
-  #colnames(ind_act) <- df_ind_act$id
-
+  #ind_act <- as.data.frame(cbind(t(df_ind_act$pob_mean), t(df_ind_act$pob_mean_cv),
+  #                               t(df_ind_act$ingpc), t(df_ind_act$ingpc_cv)))
+  #colnames(ind_act) <- c(paste(df_ind_act$id, "_p", sep=""), paste(df_ind_act$id, "_p_cv", sep=""),
+  #                       paste(df_ind_act$id, "_i", sep=""), paste(df_ind_act$id, "_i_cv", sep=""))
+  
+  #df_sex_reg$id <- paste("S", as.numeric(df_sex_reg$sex), "R", 
+  #                       str_remove(df_sex_reg$region, " "), sep="")
+  #sex_reg <- as.data.frame(cbind(t(df_sex_reg$ingpc), t(df_sex_reg$ingpc_cv),
+  #                              t(df_sex_reg$pob_mean), t(df_sex_reg$pob_mean_cv)))
+  #colnames(sex_reg) <- c(paste(df_sex_reg$id, "_i", sep=""), paste(df_sex_reg$id, "_i_cv", sep=""),
+  #                       paste(df_sex_reg$id, "_p", sep=""), paste(df_sex_reg$id, "_p_cv", sep=""))
+  
+  #df_ind_reg$id <- paste("I", as.numeric(df_ind_reg$indigena), "R", 
+  #                       str_remove(df_ind_reg$region, " "), sep="")
+  #ind_reg <- as.data.frame(cbind(t(df_ind_reg$ingpc), t(df_ind_reg$ingpc_cv),
+  #                               t(df_ind_reg$pob_mean), t(df_ind_reg$pob_mean_cv)))
+  #colnames(ind_reg) <- c(paste(df_ind_reg$id, "_i", sep=""), paste(df_ind_reg$id, "_i_cv", sep=""),
+  #                       paste(df_ind_reg$id, "_p", sep=""), paste(df_ind_reg$id, "_p_cv", sep=""))
+  
+  
   df_r <- data.table(x = 1)
   df_r$TLP <- summarise(sd, pob_mean = survey_mean(pob))$pob_mean[1] * 100
   df_r$defN <- df.def_n$ingpcdef[1]
@@ -375,6 +403,7 @@ fx.ingreso <- function(x) {
   
   df_r$ingpc <- df_r$ingpcx0
   df_r$ingpcdef <- df_r$ingpcdef0
+  #df_r <- bind_cols(df_r, df_r_i, sex_hrs, ind_act, sex_reg, ind_reg)
   df_r <- bind_cols(df_r, df_r_i)
   print(paste("Fin del calculo para el periodo ", x, sep =""))
   return(df_r)
@@ -397,7 +426,6 @@ if(todas.bases){
 }
 
 
-
 ### df <- fread(here::here("temp", "temporal.csv"))
 
 df$def <- df.inpc$def[1:length(df$ingreso_i)]
@@ -405,9 +433,11 @@ df <- data.table(df)
 df <- df[,c("ingreso_i", "ingreso_ni",
             "ingreso_h", "ingreso_m") := .(ingreso_i/def, ingreso_ni/def,
                                            ingreso_h/def, ingreso_m/def)]
+df <- as.data.frame(df)
 
 df_indigenas <- dplyr::select(df, periodo, ends_with("_i"), ends_with("_ni"),
-                              ends_with("_h"), ends_with("_m"))
+                              ends_with("_h"), ends_with("_m"),
+                              ends_with("_p"), ends_with("_cv"))
 fwrite(df_indigenas, here::here("temp", "cuadro_indigenas.csv"))
 
 
@@ -415,7 +445,8 @@ df4 <- dplyr::select(df, periodo, starts_with("ingpcdef")) %>%
   mutate(periodo = substr(periodo, 2, 5))
 df2 <- dplyr::select(df, periodo, starts_with("ingpcx")) %>% 
   mutate(periodo = substr(periodo, 2, 5))
-df <- dplyr::select(df, periodo, starts_with("TLP"))
+df <- dplyr::select(df, periodo, starts_with("TLP"), -ends_with("_i"),
+                    -ends_with("_ni"), -ends_with("_m"), -ends_with("_h"))
 df7 <- df
 
 df <- filter(df, !is.na(TLP)) %>% 
@@ -513,7 +544,7 @@ df.ca$inc_r <- (df.ca$df.ca.r - lag(df.ca$df.ca.r))/lag(df.ca$df.ca.r)
 df.ca$inc_u <- (df.ca$df.ca.u - lag(df.ca$df.ca.u))/lag(df.ca$df.ca.u)
 df.ca$per <- paste("t",df3$periodo, sep="")
 gdata::keep(ult.anio, ult.trim.l, ult.trim, n.periodo, n.ingpc, df, df2, df3,
-            df4, df7, df.ca, add_sublabs, tiempo, sure=T)
+            df4, df7, df.ca, add_sublabs, df_indigenas, tiempo, sure=T)
 save.image(file=here::here("datos_final.RData"))
 
 
